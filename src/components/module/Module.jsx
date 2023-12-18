@@ -4,10 +4,28 @@ import { getAllSubjects } from "../../utils/ApiFunctions";
 import { deleteModuleById } from "../../utils/ApiFunctions";
 import { Link } from "react-router-dom";
 
+import ShowEntries from "../pagination/ShowEntries";
+import PagePaginator from "../pagination/PagePaginator";
+import SelectPaginator from "../pagination/SelectPaginator";
+
 const Module = () => {
+  const ROLE = localStorage.getItem("role");
+
+  const [showModules, setShowModules] = useState(false);
+  const [moduleId, setModuleId] = useState();
+  const [subjects, setSubjects] = useState({
+    content: [
+      {
+        id: "",
+        name: "",
+      },
+    ],
+  });
+
   const [module, setModule] = useState({
     subjectId: "",
   });
+
   const [modules, setModules] = useState({
     content: [
       {
@@ -21,44 +39,68 @@ const Module = () => {
       },
     ],
   });
-  const [showModules, setShowModules] = useState(false);
+
+  const totalPages = modules.totalPages;
+  const totalElements = modules.totalElements;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [elementsPerPage, setElementsPerPage] = useState(10);
+
+  const startIndex = (currentPage - 1) * elementsPerPage + 1;
+  const endIndex = Math.min(currentPage * elementsPerPage, totalElements);
+
+  const totalSelectListPages = subjects.totalPages;
+  const totalSelectListElements = subjects.totalElements;
+  const [currentSelectListPage, setCurrentSelectListPage] = useState(1);
+  const [selectListElementsPerPage, setSelectElementsPerListPage] =
+    useState(10);
+
+  useEffect(() => {
+    getAllSubjects(currentSelectListPage, selectListElementsPerPage).then(
+      (data) => {
+        setSubjects(data);
+      }
+    );
+  }, [currentSelectListPage, selectListElementsPerPage]);
+
+  const handleSelectListPageChange = (pageNumber) => {
+    setCurrentSelectListPage(pageNumber);
+  };
 
   const handleGetModuleByIdSelectChange = (event) => {
     const name = event.target.name;
 
     const subjectId = event.target.value;
-   
+
     subjectId === "" ? setShowModules(false) : setShowModules(true);
-    
+
     setModule({ ...subjectId, [name]: subjectId });
-    
-    subjectId !== "" && getAllModulesBySubjectId(subjectId).then((data) => {
-      setModules(data);
-    });
   };
 
-  const [subject, setSubject] = useState({
-    content: [
-      {
-        id: "",
-        name: "",
-      },
-    ],
-  });
-
   useEffect(() => {
-    getAllSubjects().then((data) => {
-      setSubject(data);
-    });
-  }, []);
+    module.subjectId !== "" &&
+      getAllModulesBySubjectId(
+        module.subjectId,
+        currentPage,
+        elementsPerPage
+      ).then((data) => {
+        setModules(data);
+      });
+  }, [moduleId, module.subjectId, currentPage, elementsPerPage]);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handleSelectElementsPerPageChange = (event) => {
+    const value = event.target.value;
+    setElementsPerPage(value);
+  };
 
   const deleteModuleHandler = async (event, id) => {
     await deleteModuleById(id);
-    getAllModulesBySubjectId(module.subjectId).then((data) => {
-      setModules(data);
-    });
+    setModuleId(id);
   };
-  
+
   return (
     <>
       <div className="content container-fluid">
@@ -83,31 +125,20 @@ const Module = () => {
                     id="DataTables_Table_0_wrapper"
                     className="dataTables_wrapper dt-bootstrap4 no-footer"
                   >
-                    <div className="row">
-                      <div className="col-sm-12 col-md-6">
-                        <div
-                          className="dataTables_length"
-                          id="DataTables_Table_0_length"
-                        >
-                          <label>
-                            Show
-                            <select
-                              name="DataTables_Table_0_length"
-                              aria-controls="DataTables_Table_0"
-                              className="custom-select custom-select-sm form-control form-control-sm"
-                            >
-                              <option value={10}>10</option>
-                              <option value={25}>25</option>
-                              <option value={50}>50</option>
-                              <option value={100}>100</option>
-                            </select>
-                            entries
-                          </label>
-                        </div>
-                      </div>
-                      <div className="col-sm-12 col-md-6" />
-                    </div>
+                    <ShowEntries
+                      elementsPerPage={elementsPerPage}
+                      handleSelectElementsPerPageChange={
+                        handleSelectElementsPerPageChange
+                      }
+                    />
+                    <br />
                     <div className="col-12 col-sm-4">
+                      <SelectPaginator
+                        currentPage={currentSelectListPage}
+                        totalPages={totalSelectListPages}
+                        onPageChange={handleSelectListPageChange}
+                      />
+                      <br />
                       <div className="form-group local-forms">
                         <label>
                           Choose the subject
@@ -120,11 +151,12 @@ const Module = () => {
                           name="subjectId"
                           value={module.subjectId}
                           onChange={handleGetModuleByIdSelectChange}
-                        >
-                          <option value="">
-                            Choose the subject
-                          </option>
-                          {subject.content.map((sbj) => (
+                          style={{
+                            height: "13rem",
+                          }}
+                          size={2}
+                        > <option></option>
+                          {subjects.content.map((sbj) => (
                             <option value={sbj.id} key={sbj.id}>
                               {sbj.name}
                             </option>
@@ -216,8 +248,9 @@ const Module = () => {
                                         <i className="feather-eye" />
                                       </Link>
 
-                                      {localStorage.getItem("role") ===
-                                        "SUPER_ADMIN" && (
+                                      {(ROLE === "SUPER_ADMIN" ||
+                                        ROLE === "SCHOOL_ADMIN" ||
+                                        ROLE === "TEACHER") && (
                                         <>
                                           <Link
                                             to={`/update-module-by-id/${module.id}`}
@@ -225,10 +258,7 @@ const Module = () => {
                                           >
                                             <i className="feather-edit" />
                                           </Link>
-                                          <a
-                                            href="#"
-                                            className="btn btn-sm bg-danger-light"
-                                          >
+                                          <a className="btn btn-sm bg-danger-light">
                                             <i
                                               className="feather-delete"
                                               onClick={(event) =>
@@ -250,66 +280,17 @@ const Module = () => {
                         </div>
                       </div>
                     )}
-                    {showModules && modules.content.length > 0 &&<div className="row">
-                      <div className="col-sm-12 col-md-5">
-                        <div
-                          className="dataTables_info"
-                          id="DataTables_Table_0_info"
-                          role="status"
-                          aria-live="polite"
-                        >
-                          Showing 1 to 6 of 6 entries
-                        </div>
-                      </div>
-                      <div className="col-sm-12 col-md-7">
-                        <div
-                          className="dataTables_paginate paging_simple_numbers"
-                          id="DataTables_Table_0_paginate"
-                        >
-                          <ul className="pagination">
-                            <li
-                              className="paginate_button page-item previous disabled"
-                              id="DataTables_Table_0_previous"
-                            >
-                              <a
-                                href="#"
-                                aria-controls="DataTables_Table_0"
-                                data-dt-idx={0}
-                                tabIndex={0}
-                                className="page-link"
-                              >
-                                Previous
-                              </a>
-                            </li>
-                            <li className="paginate_button page-item active">
-                              <a
-                                href="#"
-                                aria-controls="DataTables_Table_0"
-                                data-dt-idx={1}
-                                tabIndex={0}
-                                className="page-link"
-                              >
-                                1
-                              </a>
-                            </li>
-                            <li
-                              className="paginate_button page-item next disabled"
-                              id="DataTables_Table_0_next"
-                            >
-                              <a
-                                href="#"
-                                aria-controls="DataTables_Table_0"
-                                data-dt-idx={2}
-                                tabIndex={0}
-                                className="page-link"
-                              >
-                                Next
-                              </a>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>}
+                    {showModules && modules.content.length > 0 && (
+                      <PagePaginator
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                        startIndex={startIndex}
+                        endIndex={endIndex}
+                        elementsPerPage={elementsPerPage}
+                        totalElements={totalElements}
+                      />
+                    )}
                   </div>
                 </div>
               </div>

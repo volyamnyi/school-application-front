@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import { Route, Routes, Link, useNavigate } from "react-router-dom";
+import { Route, Routes, Link, useNavigate, Navigate } from "react-router-dom";
 import { AuthContext } from "./components/auth/AuthProvider";
 
 import Layout from "./components/Layout";
@@ -19,7 +19,13 @@ import AddLesson from "./components/lesson/AddLesson";
 import LessonDetails from "./components/lesson/LessonDetails";
 import UpdateLessonById from "./components/lesson/UpdateLessonById";
 
+import Grade from "./components/grade/Grade";
+import GradeDetails from "./components/grade/GradeDetails";
+import AddGrade from "./components/grade/AddGrade";
+import UpdateGradeById from "./components/grade/UpdateGradeById";
+
 import Attendance from "./components/attendance/Attendance";
+import AttendanceDetails from "./components/attendance/AttendanceDetails";
 import AddAttendance from "./components/attendance/AddAttendance";
 import UpdateAttendanceById from "./components/attendance/UpdateAttendanceById";
 
@@ -50,16 +56,17 @@ import MedicalRecordsDetails from "./components/medicalrecords/MedicalRecordsDet
 import AddMedicalRecords from "./components/medicalrecords/AddMedicalRecords";
 import UpdateMedicalRecordsById from "./components/medicalrecords/UpdateMedicalRecordsById";
 
-import ParentRegistration from "./components/auth/ParentRegistration";
+import Registration from "./components/auth/Registration";
 import Login from "./components/auth/Login";
 import RequireAuth from "./components/auth/RequireAuth";
-
+import _404 from "./components/auth/_403";
 
 const App = () => {
   const [showSideBar, setShowSidebar] = useState(true);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
   const isLoggedIn = localStorage.getItem("accessToken");
+  const ROLE = localStorage.getItem("role");
 
   const auth = useContext(AuthContext);
   const navigate = useNavigate();
@@ -78,6 +85,22 @@ const App = () => {
     auth.handleLogout();
 
     navigate("/", { state: { message: " You have been logged out!" } });
+  };
+
+  const getMainPageByRole = (ROLE) => {
+    switch (ROLE) {
+      case "SUPER_ADMIN":
+      case "SCHOOL_ADMIN":
+        return <Teacher />;
+      case "TEACHER":
+        return <Subject />;
+      case "STUDENT":
+        return <Lesson />;
+      case "PARENT":
+        return <Lesson />;
+      case "MEDICAL_STAFF":
+        return <MedicalRecords />;
+    }
   };
   return (
     <div className={`main-wrapper ${!showSideBar && "mini-sidebar"}`}>
@@ -303,348 +326,466 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Layout showSidebar={showSideBar} />}>
             {/*Begin Auth Area*/}
-            <Route index element={!isLoggedIn ? <Login /> : <Teacher />} />
+            <Route index element={!isLoggedIn ? <Login /> : getMainPageByRole(ROLE)} />
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<ParentRegistration />} />
+            <Route path="/register" element={<Registration />} />
             {/*End Auth Area*/}
 
+            <Route path="*" element={<Navigate to="/forbidden" />} />
+            <Route path="/forbidden" element={<_404 />} />
+
             {/*Begin Teacher Area*/}
-            <Route
-              path="/teachers"
-              element={
-                <RequireAuth>
-                  <Teacher />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/teacher-details/:id"
-              element={
-                <RequireAuth>
-                  <TeacherDetails />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/add-teacher"
-              element={
-                <RequireAuth>
-                  <AddTeacher />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/update-teacher-by-id/:id"
-              element={
-                <RequireAuth>
-                  <UpdateTeacherById />
-                </RequireAuth>
-              }
-            />
+            {(ROLE === "SUPER_ADMIN" || ROLE === "SCHOOL_ADMIN") && (
+              <>
+                <Route
+                  path="/teachers"
+                  element={
+                    <RequireAuth>
+                      <Teacher />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/teacher-details/:id"
+                  element={
+                    <RequireAuth>
+                      <TeacherDetails />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/add-teacher"
+                  element={
+                    <RequireAuth>
+                      <AddTeacher />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/update-teacher-by-id/:id"
+                  element={
+                    <RequireAuth>
+                      <UpdateTeacherById />
+                    </RequireAuth>
+                  }
+                />
+              </>
+            )}
 
             {/*End Teacher Area*/}
 
             {/*Begin Subject Area*/}
 
-            <Route
-              path="/subjects"
-              element={
-                <RequireAuth>
-                  <Subject />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/subject-details/:id"
-              element={
-                <RequireAuth>
-                  <SubjectDetails />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/add-subject"
-              element={
-                <RequireAuth>
-                  <AddSubject />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/update-subject-by-id/:id"
-              element={
-                <RequireAuth>
-                  <UpdateSubjectById />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/upload-subjects-from-file"
-              element={
-                <RequireAuth>
-                  <UploadSubjectsFromFile />
-                </RequireAuth>
-              }
-            />
+            {(ROLE === "SUPER_ADMIN" ||
+              ROLE === "SCHOOL_ADMIN" ||
+              ROLE === "TEACHER") && (
+              <>
+                <Route
+                  path="/subjects"
+                  element={
+                    <RequireAuth>
+                      <Subject />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/subject-details/:id"
+                  element={
+                    <RequireAuth>
+                      <SubjectDetails />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/add-subject"
+                  element={
+                    <RequireAuth>
+                      <AddSubject />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/update-subject-by-id/:id"
+                  element={
+                    <RequireAuth>
+                      <UpdateSubjectById />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/upload-subjects-from-file"
+                  element={
+                    <RequireAuth>
+                      <UploadSubjectsFromFile />
+                    </RequireAuth>
+                  }
+                />
+              </>
+            )}
             {/*End Subject Area*/}
 
             {/*Begin Lesson Area*/}
 
-            <Route
-              path="/lessons"
-              element={
-                <RequireAuth>
-                  <Lesson />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/lesson-details/:id"
-              element={
-                <RequireAuth>
-                  <LessonDetails />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/add-lesson"
-              element={
-                <RequireAuth>
-                  <AddLesson />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/update-lesson-by-id/:id"
-              element={
-                <RequireAuth>
-                  <UpdateLessonById />
-                </RequireAuth>
-              }
-            />
+            {(ROLE === "SUPER_ADMIN" ||
+              ROLE === "SCHOOL_ADMIN" ||
+              ROLE === "TEACHER" ||
+              ROLE === "PARENT" ||
+              ROLE === "STUDENT") && (
+              <>
+                <Route
+                  path="/lessons"
+                  element={
+                    <RequireAuth>
+                      <Lesson />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/lesson-details/:id"
+                  element={
+                    <RequireAuth>
+                      <LessonDetails />
+                    </RequireAuth>
+                  }
+                />
+                {(ROLE === "SUPER_ADMIN" ||
+                  ROLE === "SCHOOL_ADMIN" ||
+                  ROLE === "TEACHER") && (
+                  <Route
+                    path="/add-lesson"
+                    element={
+                      <RequireAuth>
+                        <AddLesson />
+                      </RequireAuth>
+                    }
+                  />
+                )}
+                <Route
+                  path="/update-lesson-by-id/:id/:selectedSubjectId"
+                  element={
+                    <RequireAuth>
+                      <UpdateLessonById />
+                    </RequireAuth>
+                  }
+                />
+              </>
+            )}
             {/*End Lesson Area*/}
 
+            {/*Begin Grade Area*/}
+            {(ROLE === "SUPER_ADMIN" ||
+              ROLE === "SCHOOL_ADMIN" ||
+              ROLE === "TEACHER" ||
+              ROLE === "PARENT" ||
+              ROLE === "STUDENT") && (
+              <>
+                <Route
+                  path="/grades"
+                  element={
+                    <RequireAuth>
+                      <Grade />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/grade-details/:id"
+                  element={
+                    <RequireAuth>
+                      <GradeDetails />
+                    </RequireAuth>
+                  }
+                />
+                {(ROLE === "SUPER_ADMIN" ||
+                  ROLE === "SCHOOL_ADMIN" ||
+                  ROLE === "TEACHER") && (
+                  <Route
+                    path="/add-grade"
+                    element={
+                      <RequireAuth>
+                        <AddGrade />
+                      </RequireAuth>
+                    }
+                  />
+                )}
+                {(ROLE === "SUPER_ADMIN" ||
+                  ROLE === "SCHOOL_ADMIN" ||
+                  ROLE === "TEACHER") && (
+                  <Route
+                    path="/update-grade-by-id/:id"
+                    //path="/update-grade-by-id/:id/:selectedSubjectId"
+                    element={
+                      <RequireAuth>
+                        <UpdateGradeById />
+                      </RequireAuth>
+                    }
+                  />
+                )}
+              </>
+            )}
+            {/*End Grade Area*/}
             {/*Begin Attendance Area*/}
 
-            <Route
-              path="/attendance"
-              element={
-                <RequireAuth>
-                  <Attendance />
-                </RequireAuth>
-              }
-            />
-            {/*<Route
-              path="/lesson-details/:id"
-              element={
-                <RequireAuth>
-                  <LessonDetails />
-                </RequireAuth>
-              }
-            />*/}
-            <Route
-              path="/add-attendance"
-              element={
-                <RequireAuth>
-                  <AddAttendance />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/update-attendance-by-id/:id"
-              element={
-                <RequireAuth>
-                  <UpdateAttendanceById />
-                </RequireAuth>
-              }
-            />
+            {(ROLE === "SUPER_ADMIN" ||
+              ROLE === "SCHOOL_ADMIN" ||
+              ROLE === "TEACHER" ||
+              ROLE === "PARENT" ||
+              ROLE === "STUDENT") && (
+              <>
+                <Route
+                  path="/attendance"
+                  element={
+                    <RequireAuth>
+                      <Attendance />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/attendance-details/:id"
+                  element={
+                    <RequireAuth>
+                      <AttendanceDetails />
+                    </RequireAuth>
+                  }
+                />
+                {(ROLE === "SUPER_ADMIN" ||
+                  ROLE === "SCHOOL_ADMIN" ||
+                  ROLE === "TEACHER") && (
+                  <Route
+                    path="/add-attendance"
+                    element={
+                      <RequireAuth>
+                        <AddAttendance />
+                      </RequireAuth>
+                    }
+                  />
+                )}
+                {(ROLE === "SUPER_ADMIN" ||
+                  ROLE === "SCHOOL_ADMIN" ||
+                  ROLE === "TEACHER") && (
+                  <Route
+                    path="/update-attendance-by-id/:id"
+                    element={
+                      <RequireAuth>
+                        <UpdateAttendanceById />
+                      </RequireAuth>
+                    }
+                  />
+                )}
+              </>
+            )}
             {/*End Attendance Area*/}
 
             {/*Begin ClassGroup Area*/}
 
-            <Route
-              path="/classes"
-              element={
-                <RequireAuth>
-                  <ClassGroup />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/class-group-details/:id"
-              element={
-                <RequireAuth>
-                  <ClassGroupDetails />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/add-class-group"
-              element={
-                <RequireAuth>
-                  <AddClassGroup />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/update-class-group-by-id/:id"
-              element={
-                <RequireAuth>
-                  <UpdateClassGroupById />
-                </RequireAuth>
-              }
-            />
+            {(ROLE === "SUPER_ADMIN" ||
+              ROLE === "SCHOOL_ADMIN" ||
+              ROLE === "TEACHER") && (
+              <>
+                <Route
+                  path="/classes"
+                  element={
+                    <RequireAuth>
+                      <ClassGroup />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/class-group-details/:id"
+                  element={
+                    <RequireAuth>
+                      <ClassGroupDetails />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/add-class-group"
+                  element={
+                    <RequireAuth>
+                      <AddClassGroup />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/update-class-group-by-id/:id"
+                  element={
+                    <RequireAuth>
+                      <UpdateClassGroupById />
+                    </RequireAuth>
+                  }
+                />
+              </>
+            )}
             {/*End ClassGroup Area*/}
 
             {/*Begin Module Area*/}
 
-            <Route
-              path="/modules"
-              element={
-                <RequireAuth>
-                  <Module />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/module-details/:id"
-              element={
-                <RequireAuth>
-                  <ModuleDetails />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/add-module"
-              element={
-                <RequireAuth>
-                  <AddModule />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/update-module-by-id/:id"
-              element={
-                <RequireAuth>
-                  <UpdateModuleById />
-                </RequireAuth>
-              }
-            />
+            {(ROLE === "SUPER_ADMIN" ||
+              ROLE === "SCHOOL_ADMIN" ||
+              ROLE === "TEACHER") && (
+              <>
+                <Route
+                  path="/modules"
+                  element={
+                    <RequireAuth>
+                      <Module />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/module-details/:id"
+                  element={
+                    <RequireAuth>
+                      <ModuleDetails />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/add-module"
+                  element={
+                    <RequireAuth>
+                      <AddModule />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/update-module-by-id/:id"
+                  element={
+                    <RequireAuth>
+                      <UpdateModuleById />
+                    </RequireAuth>
+                  }
+                />
+              </>
+            )}
             {/*End Module Area*/}
 
             {/*Begin Student Area*/}
-            <Route
-              path="/students"
-              element={
-                <RequireAuth>
-                  <Student />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/student-details/:id"
-              element={
-                <RequireAuth>
-                  <StudentDetails />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/add-student"
-              element={
-                <RequireAuth>
-                  <AddStudent />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/update-student-by-id/:id"
-              element={
-                <RequireAuth>
-                  <UpdateStudentById />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/upload-students-from-file"
-              element={
-                <RequireAuth>
-                  <UploadStudentsFromFile />
-                </RequireAuth>
-              }
-            />
+            {(ROLE === "SUPER_ADMIN" || ROLE === "SCHOOL_ADMIN") && (
+              <>
+                <Route
+                  path="/students"
+                  element={
+                    <RequireAuth>
+                      <Student />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/student-details/:id"
+                  element={
+                    <RequireAuth>
+                      <StudentDetails />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/add-student"
+                  element={
+                    <RequireAuth>
+                      <AddStudent />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/update-student-by-id/:id"
+                  element={
+                    <RequireAuth>
+                      <UpdateStudentById />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/upload-students-from-file"
+                  element={
+                    <RequireAuth>
+                      <UploadStudentsFromFile />
+                    </RequireAuth>
+                  }
+                />
+              </>
+            )}
             {/*End Student Area*/}
 
             {/*Begin Parent Area*/}
-            <Route
-              path="/parents"
-              element={
-                <RequireAuth>
-                  <Parent />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/parent-details/:id"
-              element={
-                <RequireAuth>
-                  <ParentDetails />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/add-parent"
-              element={
-                <RequireAuth>
-                  <AddParent />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/update-parent-by-id/:id"
-              element={
-                <RequireAuth>
-                  <UpdateParentById />
-                </RequireAuth>
-              }
-            />
+            {(ROLE === "SUPER_ADMIN" || ROLE === "SCHOOL_ADMIN") && (
+              <>
+                <Route
+                  path="/parents"
+                  element={
+                    <RequireAuth>
+                      <Parent />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/parent-details/:id"
+                  element={
+                    <RequireAuth>
+                      <ParentDetails />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/add-parent"
+                  element={
+                    <RequireAuth>
+                      <AddParent />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/update-parent-by-id/:id"
+                  element={
+                    <RequireAuth>
+                      <UpdateParentById />
+                    </RequireAuth>
+                  }
+                />
+              </>
+            )}
 
             {/*End Parent Area*/}
 
             {/*Begin Medical Records Area*/}
 
-            <Route
-              path="/medical-records"
-              element={
-                <RequireAuth>
-                  <MedicalRecords />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/medical-records-details/:id"
-              element={
-                <RequireAuth>
-                  <MedicalRecordsDetails />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/add-medical-records"
-              element={
-                <RequireAuth>
-                  <AddMedicalRecords />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/update-medical-records-by-id/:id"
-              element={
-                <RequireAuth>
-                  <UpdateMedicalRecordsById />
-                </RequireAuth>
-              }
-            />
+            {(ROLE === "SUPER_ADMIN" ||
+              ROLE === "SCHOOL_ADMIN" ||
+              ROLE === "MEDICAL_STAFF") && (
+              <>
+                <Route
+                  path="/medical-records"
+                  element={
+                    <RequireAuth>
+                      <MedicalRecords />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/medical-records-details/:id"
+                  element={
+                    <RequireAuth>
+                      <MedicalRecordsDetails />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/add-medical-records"
+                  element={
+                    <RequireAuth>
+                      <AddMedicalRecords />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/update-medical-records-by-id/:id"
+                  element={
+                    <RequireAuth>
+                      <UpdateMedicalRecordsById />
+                    </RequireAuth>
+                  }
+                />
+              </>
+            )}
             {/*End Medical Records Area*/}
           </Route>
         </Routes>

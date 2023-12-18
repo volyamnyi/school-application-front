@@ -2,7 +2,7 @@ import axios from "axios";
 
 export const api = axios.create({
   baseURL: "http://localhost:8080",
-  //baseURL: "https://d2e6-95-46-32-4.ngrok-free.app",
+  //baseURL: "https://d022-95-46-32-4.ngrok-free.app",
 });
 
 export const getHeader = () => {
@@ -51,9 +51,12 @@ export async function userRegister(registration) {
 /* End User area */
 
 /* Begin Teacher area */
-export async function getAllTeachers() {
+export async function getAllTeachers(currentPage, elementsPerPage) {
   try {
-    const response = await api.get("/api/teachers", { headers: getHeader() });
+    const response = await api.get(
+      `/api/teachers?page=${currentPage - 1}&size=${elementsPerPage}`,
+      { headers: getHeader() }
+    );
     return response.data;
   } catch (error) {
     throw new Error("Error fetching teachers");
@@ -118,9 +121,12 @@ export async function deleteTeacherById(teacherId) {
 /* End Teacher area */
 
 /* Begin Subject area */
-export async function getAllSubjects() {
+export async function getAllSubjects(currentPage, elementsPerPage) {
   try {
-    const response = await api.get("/api/subjects", { headers: getHeader() });
+    const response = await api.get(
+      `/api/subjects?page=${currentPage - 1}&size=${elementsPerPage}`,
+      { headers: getHeader() }
+    );
     return response.data;
   } catch (error) {
     throw new Error("Error fetching subjects");
@@ -198,11 +204,20 @@ export async function deleteSubjectById(subjectId) {
 /* End Subject area */
 
 /* Begin Lesson area */
-export async function getAllLessonsBySubjectId(subjectId) {
+export async function getAllLessonsBySubjectId(
+  subjectId,
+  currentPage,
+  elementsPerPage
+) {
   try {
-    const response = await api.get(`/api/lessons/subjects/${subjectId}`, {
-      headers: getHeader(),
-    });
+    const response = await api.get(
+      `/api/lessons/subjects/${subjectId}?page=${
+        currentPage - 1
+      }&size=${elementsPerPage}`,
+      {
+        headers: getHeader(),
+      }
+    );
     return response.data;
   } catch (error) {
     throw new Error("Error fetching lessons");
@@ -280,11 +295,145 @@ export async function deleteLessonById(lessonId) {
 }
 
 /* End Lesson area */
-/* Begin Attendance Area */
-export async function getAllAttendance() {
-  
+
+/* Begin Grade Area*/
+export async function getGradeById(gradeId) {
   try {
-    const response = await api.get("/api/attendances", { headers: getHeader() });
+    const response = await api.get(`/api/grades/${gradeId}`, {
+      headers: getHeader(),
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(`Error fetching grade ${error.message}`);
+  }
+}
+
+export async function getAllGradesByLessonId(
+  lessonId,
+  currentPage,
+  elementsPerPage
+) {
+  try {
+    const response = await api.get(
+      `/api/lessons/${lessonId}/grades?page=${
+        currentPage - 1
+      }&size=${elementsPerPage}`,
+      {
+        headers: getHeader(),
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error("Error fetching modules");
+  }
+}
+
+export async function getAllGradesByStudentId(
+  studentId,
+  currentPage,
+  elementsPerPage
+) {
+  try {
+    const response = await api.get(
+      `/api/students/${studentId}/grades?page=${
+        currentPage - 1
+      }&size=${elementsPerPage}`,
+      {
+        headers: getHeader(),
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error("Error fetching modules");
+  }
+}
+
+export async function getAllGradesByModuleId(
+  moduleId,
+  currentPage,
+  elementsPerPage
+) {
+  try {
+    const response = await api.get(
+      `/api/modules/${moduleId}/grades?page=${
+        currentPage - 1
+      }&size=${elementsPerPage}`,
+      {
+        headers: getHeader(),
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error("Error fetching modules");
+  }
+}
+
+export async function addGrade(gradeData) {
+  const formData = new FormData();
+
+  formData.append("studentId", gradeData.studentId);
+  formData.append("lessonId", gradeData.lessonId);
+  formData.append("gradeValue", gradeData.gradeValue);
+  formData.append("gradeType", gradeData.gradeType);
+
+  try {
+    const response = await api.post("/api/grades", formData, {
+      headers: getHeader(),
+    });
+    return response;
+  } catch (error) {
+    return error.response.data;
+  }
+}
+
+export async function updateGradeById(gradeId, gradeData) {
+  const formData = new FormData();
+
+  formData.append("studentId", gradeData.studentId);
+  formData.append("lessonId", gradeData.lessonId);
+  formData.append("gradeValue", gradeData.gradeValue);
+  formData.append("gradeType", gradeData.gradeType);
+
+  try {
+    const response = await api.put(`/api/grades/${gradeId}`, formData, {
+      headers: getHeader(),
+    });
+    return response;
+  } catch (error) {
+    return error.response.data;
+  }
+}
+export async function deleteGradeById(gradeId) {
+  try {
+    const response = await api.delete(`/api/grades/${gradeId}`, {
+      headers: getHeader(),
+    });
+    return response.data;
+  } catch (error) {
+    return error.message;
+  }
+}
+/* End Grade Area*/
+
+/* Begin Attendance Area */
+export async function getAllAttendance(currentPage, elementsPerPage) {
+  try {
+    const response = await api.get(
+      `/api/attendances?page=${currentPage - 1}&size=${elementsPerPage}`,
+      {
+        headers: getHeader(),
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error("Error fetching attendance");
+  }
+}
+export async function getAttendanceById(attendanceId) {
+  try {
+    const response = await api.get(`/api/attendances/${attendanceId}`, {
+      headers: getHeader(),
+    });
     return response.data;
   } catch (error) {
     throw new Error("Error fetching attendance");
@@ -293,11 +442,10 @@ export async function getAllAttendance() {
 
 export async function addAttendance(attendanceData) {
   const formData = new FormData();
-  
+
   formData.append("lessonId", attendanceData.lessonId);
   formData.append("studentId", attendanceData.studentId);
   formData.append("attendanceType", attendanceData.attendanceType);
-  
 
   try {
     const response = await api.post("/api/attendances", formData, {
@@ -309,18 +457,21 @@ export async function addAttendance(attendanceData) {
   }
 }
 
-export async function updateAttendanceById(attendanceId,attendanceData) {
+export async function updateAttendanceById(attendanceId, attendanceData) {
   const formData = new FormData();
-  
+
   formData.append("lessonId", attendanceData.lessonId);
   formData.append("studentId", attendanceData.studentId);
   formData.append("attendanceType", attendanceData.attendanceType);
-  
 
   try {
-    const response = await api.put(`/api/attendances/${attendanceId}`, formData, {
-      headers: getHeader(),
-    });
+    const response = await api.put(
+      `/api/attendances/${attendanceId}`,
+      formData,
+      {
+        headers: getHeader(),
+      }
+    );
     return response;
   } catch (error) {
     return error.response.data;
@@ -340,9 +491,12 @@ export async function deleteAttendanceById(attendanceId) {
 /* End Attendance Area */
 
 /* Begin ClassGroups area */
-export async function getAllClassGroups() {
+export async function getAllClassGroups(currentPage, elementsPerPage) {
   try {
-    const response = await api.get("/api/classes", { headers: getHeader() });
+    const response = await api.get(
+      `/api/classes?page=${currentPage - 1}&size=${elementsPerPage}`,
+      { headers: getHeader() }
+    );
     return response.data;
   } catch (error) {
     throw new Error("Error fetching classes");
@@ -420,10 +574,16 @@ export async function deleteClassGroupById(classGroupId) {
 /* End Classes area */
 
 /* Begin Module area */
-export async function getAllModulesBySubjectId(subjectId) {
+export async function getAllModulesBySubjectId(
+  subjectId,
+  currentPage,
+  elementsPerPage
+) {
   try {
     const response = await api.get(
-      `/api/modules/subjects/${subjectId}/modules`,
+      `/api/modules/subjects/${subjectId}/modules?page=${
+        currentPage - 1
+      }&size=${elementsPerPage}`,
       {
         headers: getHeader(),
       }
@@ -521,9 +681,12 @@ export async function deleteModuleById(moduleId) {
 /* End Module area */
 
 /* Begin Student area */
-export async function getAllStudents() {
+export async function getAllStudents(currentPage, elementsPerPage) {
   try {
-    const response = await api.get("/api/students", { headers: getHeader() });
+    const response = await api.get(
+      `/api/students?page=${currentPage - 1}&size=${elementsPerPage}`,
+      { headers: getHeader() }
+    );
     return response.data;
   } catch (error) {
     throw new Error("Error fetching students");
@@ -616,9 +779,12 @@ export async function deleteStudentById(studentId) {
 /* End Student area */
 
 /* Begin Parent area */
-export async function getAllParents() {
+export async function getAllParents(currentPage, elementsPerPage) {
   try {
-    const response = await api.get("/api/parents", { headers: getHeader() });
+    const response = await api.get(
+      `/api/parents?page=${currentPage - 1}&size=${elementsPerPage}`,
+      { headers: getHeader() }
+    );
     return response.data;
   } catch (error) {
     throw new Error("Error fetching parents");
@@ -677,11 +843,14 @@ export async function deleteParentById(parentId) {
 /* End Parent area */
 
 /* Begin Medical Records area */
-export async function getAllMedicalRecords() {
+export async function getAllMedicalRecords(currentPage, elementsPerPage) {
   try {
-    const response = await api.get("/api/medical-records", {
-      headers: getHeader(),
-    });
+    const response = await api.get(
+      `/api/medical-records?page=${currentPage - 1}&size=${elementsPerPage}`,
+      {
+        headers: getHeader(),
+      }
+    );
     return response.data;
   } catch (error) {
     throw new Error("Error fetching medical records");

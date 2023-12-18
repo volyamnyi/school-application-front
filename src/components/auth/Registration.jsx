@@ -7,7 +7,7 @@ const Registration = () => {
     email: "",
     password: "",
     password_confirm: "",
-    userType: "PARENT",
+    userType: "",
   });
 
   const [errorMessage, setErrorMessage] = useState("");
@@ -52,6 +52,13 @@ const Registration = () => {
       setSuccessMessage("");
     }, 5000);
   };
+  const handleSelectUserTypeChange = (event) => {
+    const name = event.target.name;
+    const value = event.target.value;
+
+    setRegistration({ ...registration, [name]: value });
+
+  };
 
   return (
     <>
@@ -79,6 +86,25 @@ const Registration = () => {
                     Enter details to create your account
                   </p>
                   <form onSubmit={handleRegistration}>
+                    <div className="form-group local-forms">
+                      <label>
+                        Choose your role
+                        <span className="login-danger">*</span>
+                      </label>
+                      <select
+                        required
+                        className="form-control"
+                        id="userType"
+                        name="userType"
+                        value={registration.userType}
+                        onChange={handleSelectUserTypeChange}
+                      >
+                        <option value="">Choose your role</option>
+                        <option value="TEACHER">TEACHER</option>
+                        <option value="PARENT">PARENT</option>
+                        <option value="STUDENT">STUDENT</option>
+                      </select>
+                    </div>
                     <div className="form-group">
                       <label>
                         Email <span className="login-danger">*</span>

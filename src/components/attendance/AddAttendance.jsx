@@ -3,10 +3,14 @@ import { addAttendance } from "../../utils/ApiFunctions";
 import { getAllSubjects } from "../../utils/ApiFunctions";
 import { getAllStudents } from "../../utils/ApiFunctions";
 import { getAllLessonsBySubjectId } from "../../utils/ApiFunctions";
-
 import { Link } from "react-router-dom";
 
+import SelectPaginator from "../pagination/SelectPaginator";
+
 const AddAttendance = () => {
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
   const [newAttendance, setNewAttendance] = useState({
     lessonId: "",
     studentId: "",
@@ -50,19 +54,76 @@ const AddAttendance = () => {
     ],
   });
 
-  const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const totalStudentSelectListPages = students.totalPages;
+  const totalStudentSelectListElements = students.totalElements;
+  const [currentStudentSelectListPage, setCurrentStudentSelectListPage] =
+    useState(1);
+  const [
+    selectStudentListElementsPerPage,
+    setStudentSelectElementsPerListPage,
+  ] = useState(10);
+
+  const totalSubjectSelectListPages = subjects.totalPages;
+  const totalSubjectSelectListElements = subjects.totalElements;
+  const [currentSubjectSelectListPage, setCurrentSubjectSelectListPage] =
+    useState(1);
+  const [
+    selectSubjectListElementsPerPage,
+    setSelectSubjectElementsPerListPage,
+  ] = useState(10);
+
+  const totalLessonSelectListPages = lessons.totalPages;
+  const totalLessonSelectListElements = lessons.totalElements;
+  const [currentLessonSelectListPage, setCurrentLessonSelectListPage] =
+    useState(1);
+  const [selectLessonListElementsPerPage, setSelectLessonElementsPerListPage] =
+    useState(10);
 
   useEffect(() => {
-    getAllSubjects().then((data) => {
-      setSubjects(data);
-    });
-  }, []);
-  useEffect(() => {
-    getAllStudents().then((data) => {
+    getAllStudents(
+      currentStudentSelectListPage,
+      selectStudentListElementsPerPage
+    ).then((data) => {
       setStudents(data);
     });
-  }, []);
+  }, [currentStudentSelectListPage, selectStudentListElementsPerPage]);
+
+  useEffect(() => {
+    getAllSubjects(
+      currentSubjectSelectListPage,
+      selectSubjectListElementsPerPage
+    ).then((data) => {
+      setSubjects(data);
+    });
+  }, [currentSubjectSelectListPage, selectSubjectListElementsPerPage]);
+
+  useEffect(() => {
+    if (subject.id !== "") {
+      getAllLessonsBySubjectId(
+        subject.id,
+        currentLessonSelectListPage,
+        selectLessonListElementsPerPage
+      ).then((data) => {
+        setLessons(data);
+      });
+    }
+  }, [
+    subject.id,
+    currentLessonSelectListPage,
+    selectLessonListElementsPerPage,
+  ]);
+
+  const handleStudentSelectListPageChange = (pageNumber) => {
+    setCurrentStudentSelectListPage(pageNumber);
+  };
+
+  const handleSubjectSelectListPageChange = (pageNumber) => {
+    setCurrentSubjectSelectListPage(pageNumber);
+  };
+
+  const handleLessonSelectListPageChange = (pageNumber) => {
+    setCurrentLessonSelectListPage(pageNumber);
+  };
 
   const handleSelectSubjectChange = (event) => {
     const name = event.target.name;
@@ -70,7 +131,7 @@ const AddAttendance = () => {
 
     setSubject({ ...subject, [name]: value });
 
-    value !== ""
+    /*value !== ""
       ? getAllLessonsBySubjectId(value).then((data) => {
           setLessons(data);
         })
@@ -85,7 +146,7 @@ const AddAttendance = () => {
               moduleId: "",
             },
           ],
-        });
+        });*/
   };
 
   const handleSelectLessonChange = (event) => {
@@ -167,53 +228,13 @@ const AddAttendance = () => {
                         <span>Attendance Information</span>
                       </h5>
                     </div>
-                    <div className="col-12 col-sm-3">
-                      <div className="form-group local-forms">
-                        <label>
-                          Choose the subject
-                          <span className="login-danger">*</span>
-                        </label>
-                        <select
-                          required
-                          className="form-control"
-                          id="id"
-                          name="id"
-                          value={subject.id}
-                          onChange={handleSelectSubjectChange}
-                        >
-                          <option value="">Choose the subject</option>
-                          {subjects.content.map((sb) => (
-                            <option value={sb.id} key={sb.id}>
-                              {sb.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="col-12 col-sm-3">
-                      <div className="form-group local-forms">
-                        <label>
-                          Choose the lessons
-                          <span className="login-danger">*</span>
-                        </label>
-                        <select
-                          required
-                          className="form-control"
-                          id="lessonId"
-                          name="lessonId"
-                          value={newAttendance.lessonId}
-                          onChange={handleSelectLessonChange}
-                        >
-                          <option value="">Choose the lesson</option>
-                          {lessons.content.map((less) => (
-                            <option value={less.id} key={less.id}>
-                              {less.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="col-12 col-sm-3">
+                    <div className="col-12 col-sm-4">
+                      <SelectPaginator
+                        currentPage={currentStudentSelectListPage}
+                        totalPages={totalStudentSelectListPages}
+                        onPageChange={handleStudentSelectListPageChange}
+                      />
+                      <br />
                       <div className="form-group local-forms">
                         <label>
                           Choose the student
@@ -226,8 +247,12 @@ const AddAttendance = () => {
                           name="studentId"
                           value={newAttendance.studentId}
                           onChange={handleSelectStudentChange}
+                          style={{
+                            height: "13rem",
+                          }}
+                          size={2}
                         >
-                          <option value="">Choose the student</option>
+                          <option></option>
                           {students.content.map((st) => (
                             <option value={st.id} key={st.id}>
                               {st.firstName} {st.lastName}
@@ -236,10 +261,76 @@ const AddAttendance = () => {
                         </select>
                       </div>
                     </div>
+                    <div className="col-12 col-sm-4">
+                      <SelectPaginator
+                        currentPage={currentSubjectSelectListPage}
+                        totalPages={totalSubjectSelectListPages}
+                        onPageChange={handleSubjectSelectListPageChange}
+                      />
+                      <br />
+                      <div className="form-group local-forms">
+                        <label>
+                          Choose the subject
+                          <span className="login-danger">*</span>
+                        </label>
+                        <select
+                          required
+                          className="form-control"
+                          id="id"
+                          name="id"
+                          value={subject.id}
+                          onChange={handleSelectSubjectChange}
+                          style={{
+                            height: "13rem",
+                          }}
+                          size={2}
+                        >
+                          <option></option>
+                          {subjects.content.map((sb) => (
+                            <option value={sb.id} key={sb.id}>
+                              {sb.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="col-12 col-sm-4">
+                      <SelectPaginator
+                        currentPage={currentLessonSelectListPage}
+                        totalPages={totalLessonSelectListPages}
+                        onPageChange={handleLessonSelectListPageChange}
+                      />
+                      <br />
+                      <div className="form-group local-forms">
+                        <label>
+                          Choose the lessons
+                          <span className="login-danger">*</span>
+                        </label>
+                        <select
+                          required
+                          className="form-control"
+                          id="lessonId"
+                          name="lessonId"
+                          value={newAttendance.lessonId}
+                          onChange={handleSelectLessonChange}
+                          style={{
+                            height: "13rem",
+                          }}
+                          size={2}
+                        >
+                          <option></option>
+                          {lessons.content.map((less) => (
+                            <option value={less.id} key={less.id}>
+                              {less.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
                     <div className="col-12 col-sm-3">
                       <div className="form-group local-forms">
                         <label>
-                          Choose the student
+                          Choose the attendance type
                           <span className="login-danger">*</span>
                         </label>
                         <select

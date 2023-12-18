@@ -1,23 +1,34 @@
 import React, { useEffect, useState } from "react";
-import { addLesson } from "../../utils/ApiFunctions";
+import { addGrade } from "../../utils/ApiFunctions";
+import { getAllStudents } from "../../utils/ApiFunctions";
 import { getAllSubjects } from "../../utils/ApiFunctions";
-import { getAllModulesBySubjectId } from "../../utils/ApiFunctions";
+import { getAllLessonsBySubjectId } from "../../utils/ApiFunctions";
 import { Link } from "react-router-dom";
 
 import SelectPaginator from "../pagination/SelectPaginator";
 
-const AddLesson = () => {
-  const [newLesson, setNewLesson] = useState({
-    name: "",
-    date: "",
-    period: "",
-    homework: "",
-    moduleId: "",
-  });
-  const today = new Date().toISOString().split("T")[0];
+const AddGrade = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  const [newGrade, setNewGrade] = useState({
+    studentId: "",
+    lessonId: "",
+    gradeValue: "",
+    gradeType: "",
+  });
+  const [lessons, setLessons] = useState({
+    content: [
+      {
+        id: "",
+        name: "",
+        date: "",
+        period: "",
+        homework: "",
+        moduleId: "",
+      },
+    ],
+  });
   const [subject, setSubject] = useState({
     id: "",
     name: "",
@@ -32,20 +43,27 @@ const AddLesson = () => {
     ],
   });
 
-  const [modules, setModules] = useState({
+  const [students, setStudents] = useState({
     content: [
       {
         id: "",
-        subjectId: "",
-        classRoomId: "",
-        teacherId: "",
-        name: "",
-        startDate: "",
-        endDate: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
       },
     ],
   });
 
+  const totalStudentSelectListPages = students.totalPages;
+  const totalStudentSelectListElements = students.totalElements;
+  const [currentStudentSelectListPage, setCurrentStudentSelectListPage] =
+    useState(1);
+  const [
+    selectStudentListElementsPerPage,
+    setStudentSelectElementsPerListPage,
+  ] = useState(10);
+  
   const totalSubjectSelectListPages = subjects.totalPages;
   const totalSubjectSelectListElements = subjects.totalElements;
   const [currentSubjectSelectListPage, setCurrentSubjectSelectListPage] =
@@ -55,12 +73,23 @@ const AddLesson = () => {
     setSelectSubjectElementsPerListPage,
   ] = useState(10);
 
-  const totalModuleSelectListPages = modules.totalPages;
-  const totalModuleSelectListElements = modules.totalElements;
-  const [currentModuleSelectListPage, setCurrentModuleSelectListPage] =
+  const totalLessonSelectListPages = lessons.totalPages;
+  const totalLessonSelectListElements = lessons.totalElements;
+  const [currentLessonSelectListPage, setCurrentLessonSelectListPage] =
     useState(1);
-  const [selectModuleListElementsPerPage, setSelectModuleElementsPerListPage] =
+  const [selectLessonListElementsPerPage, setSelectLessonElementsPerListPage] =
     useState(10);
+  
+  
+    useEffect(() => {
+    getAllStudents(
+      currentStudentSelectListPage,
+      selectStudentListElementsPerPage
+    ).then((data) => {
+      setStudents(data);
+    });
+  }, [currentStudentSelectListPage, selectStudentListElementsPerPage]);
+
 
   useEffect(() => {
     getAllSubjects(
@@ -72,26 +101,31 @@ const AddLesson = () => {
   }, [currentSubjectSelectListPage, selectSubjectListElementsPerPage]);
 
   useEffect(() => {
-    subject.id !== "" &&
-      getAllModulesBySubjectId(
+    if (subject.id !== "") {
+      getAllLessonsBySubjectId(
         subject.id,
-        currentModuleSelectListPage,
-        selectModuleListElementsPerPage
+        currentLessonSelectListPage,
+        selectLessonListElementsPerPage
       ).then((data) => {
-        setModules(data);
+        setLessons(data);
       });
+    }
   }, [
     subject.id,
-    currentModuleSelectListPage,
-    selectModuleListElementsPerPage,
+    currentLessonSelectListPage,
+    selectLessonListElementsPerPage,
   ]);
+
+  const handleStudentSelectListPageChange = (pageNumber) => {
+    setCurrentStudentSelectListPage(pageNumber);
+  };
 
   const handleSubjectSelectListPageChange = (pageNumber) => {
     setCurrentSubjectSelectListPage(pageNumber);
   };
 
-  const handleModuleSelectListPageChange = (pageNumber) => {
-    setCurrentModuleSelectListPage(pageNumber);
+  const handleLessonSelectListPageChange = (pageNumber) => {
+    setCurrentLessonSelectListPage(pageNumber);
   };
 
   const handleSelectSubjectChange = (event) => {
@@ -99,52 +133,54 @@ const AddLesson = () => {
     const value = event.target.value;
 
     setSubject({ ...subject, [name]: value });
-    setCurrentModuleSelectListPage(1);
 
     /*value !== ""
-      ? getAllModulesBySubjectId(value).then((data) => {
-          setModules(data);
+      ? getAllLessonsBySubjectId(value).then((data) => {
+          setLessons(data);
         })
-      : setModules({
+      : setLessons({
           content: [
             {
               id: "",
-              subjectId: "",
-              classRoomId: "",
-              teacherId: "",
               name: "",
-              startDate: "",
-              endDate: "",
+              date: "",
+              period: "",
+              homework: "",
+              moduleId: "",
             },
           ],
         });*/
   };
 
-  const handleSelectModuleChange = (event) => {
+  const handleSelectLessonChange = (event) => {
     const name = event.target.name;
     const value = event.target.value;
-    setNewLesson({ ...newLesson, [name]: value });
+    setNewGrade({ ...newGrade, [name]: value });
   };
 
-  const handleAddLessonInputChange = (event) => {
+  const handleAddGradeInputChange = (event) => {
     const name = event.target.name;
     const value = event.target.value;
-    setNewLesson({ ...newLesson, [name]: value });
+    setNewGrade({ ...newGrade, [name]: value });
+  };
+  const handleSelectStudentChange = (event) => {
+    const name = event.target.name;
+    const value = event.target.value;
+    setNewGrade({ ...newGrade, [name]: value });
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const response = await addLesson(newLesson);
-    setNewLesson({
-      name: newLesson.name,
-      date: newLesson.date,
-      period: newLesson.period,
-      homework: newLesson.homework,
-      moduleId: newLesson.moduleId,
+    const response = await addGrade(newGrade);
+    setNewGrade({
+      studentId: "",
+      lessonId: "",
+      gradeValue: "",
+      gradeType: "",
     });
 
-    if (response.status === 201) {
-      setSuccessMessage("The Lesson added successfully!");
+    if (response.status === 200) {
+      setSuccessMessage("The Grade added successfully!");
     } else {
       setErrorMessage(response);
     }
@@ -153,7 +189,6 @@ const AddLesson = () => {
       setErrorMessage("");
     }, 3000);
   };
-  console.log(newLesson);
   return (
     <>
       <div className="content container-fluid">
@@ -176,12 +211,12 @@ const AddLesson = () => {
         <div className="page-header">
           <div className="row align-items-center">
             <div className="col">
-              <h3 className="page-title">Add Lesson</h3>
+              <h3 className="page-title">Add Grade</h3>
               <ul className="breadcrumb">
                 <li className="breadcrumb-item">
-                  <Link to="/lessons">Lessons</Link>
+                  <Link to="/grades">Grade</Link>
                 </li>
-                <li className="breadcrumb-item active">Add Lesson</li>
+                <li className="breadcrumb-item active">Add Grade</li>
               </ul>
             </div>
           </div>
@@ -194,58 +229,40 @@ const AddLesson = () => {
                   <div className="row">
                     <div className="col-12">
                       <h5 className="form-title">
-                        <span>Lesson Information</span>
+                        <span>Grade Information</span>
                       </h5>
                     </div>
                     <div className="col-12 col-sm-4">
+                      <SelectPaginator
+                        currentPage={currentStudentSelectListPage}
+                        totalPages={totalStudentSelectListPages}
+                        onPageChange={handleStudentSelectListPageChange}
+                      />
+                      <br />
                       <div className="form-group local-forms">
                         <label>
-                          Lesson Name <span className="login-danger">*</span>
+                          Choose the student
+                          <span className="login-danger">*</span>
                         </label>
-                        <input
+                        <select
                           required
-                          type="text"
                           className="form-control"
-                          id="name"
-                          name="name"
-                          value={newLesson.name}
-                          onChange={handleAddLessonInputChange}
-                        />
-                      </div>
-                    </div>
-                    <div className="col-12 col-sm-4">
-                      <div className="form-group local-forms">
-                        <label>
-                          Lesson Date <span className="login-danger">*</span>
-                        </label>
-                        <input
-                          required
-                          type="date"
-                          className="form-control"
-                          id="date"
-                          name="date"
-                          value={newLesson.date}
-                          onChange={handleAddLessonInputChange}
-                          min={today}
-                        />
-                      </div>
-                    </div>
-                    <div className="col-12 col-sm-4">
-                      <div className="form-group local-forms">
-                        <label>
-                          Lesson Period <span className="login-danger">*</span>
-                        </label>
-                        <input
-                          required
-                          type="number"
-                          min="0"
-                          max="8"
-                          className="form-control"
-                          id="period"
-                          name="period"
-                          value={newLesson.period}
-                          onChange={handleAddLessonInputChange}
-                        />
+                          id="studentId"
+                          name="studentId"
+                          value={newGrade.studentId}
+                          onChange={handleSelectStudentChange}
+                          style={{
+                            height: "13rem",
+                          }}
+                          size={2}
+                        >
+                          <option></option>
+                          {students.content.map((st) => (
+                            <option value={st.id} key={st.id}>
+                              {st.firstName} {st.lastName}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                     <div className="col-12 col-sm-4">
@@ -282,51 +299,77 @@ const AddLesson = () => {
                       </div>
                     </div>
                     <div className="col-12 col-sm-4">
-                      <SelectPaginator
-                        currentPage={currentModuleSelectListPage}
-                        totalPages={totalModuleSelectListPages}
-                        onPageChange={handleModuleSelectListPageChange}
+                    <SelectPaginator
+                        currentPage={currentLessonSelectListPage}
+                        totalPages={totalLessonSelectListPages}
+                        onPageChange={handleLessonSelectListPageChange}
                       />
                       <br />
                       <div className="form-group local-forms">
                         <label>
-                          Choose the module
+                          Choose the lessons
                           <span className="login-danger">*</span>
                         </label>
                         <select
                           required
                           className="form-control"
-                          id="moduleId"
-                          name="moduleId"
-                          value={newLesson.moduleId}
-                          onChange={handleSelectModuleChange}
+                          id="lessonId"
+                          name="lessonId"
+                          value={newGrade.lessonId}
+                          onChange={handleSelectLessonChange}
                           style={{
                             height: "13rem",
                           }}
                           size={2}
                         >
                           <option></option>
-                          {modules.content.map((mod) => (
-                            <option value={mod.id} key={mod.id}>
-                              {mod.name}
+                          {lessons.content.map((less) => (
+                            <option value={less.id} key={less.id}>
+                              {less.name}
                             </option>
                           ))}
                         </select>
                       </div>
                     </div>
-
-                    <div className="col-12 col-sm-4">
+                    <div className="col-12 col-sm-3">
                       <div className="form-group local-forms">
-                        <label>Homerwork</label>
-                        <textarea
-                          style={{ width: "100%", height: "285px" }}
-                          type="text"
+                        <label>
+                          Grade Value <span className="login-danger">*</span>
+                        </label>
+                        <input
+                          required
+                          type="number"
+                          min="1"
+                          max="12"
                           className="form-control"
-                          id="homework"
-                          name="homework"
-                          value={newLesson.homework}
-                          onChange={handleAddLessonInputChange}
+                          id="gradeValue"
+                          name="gradeValue"
+                          value={newGrade.gradeValue}
+                          onChange={handleAddGradeInputChange}
                         />
+                      </div>
+                    </div>
+                    <div className="col-12 col-sm-3">
+                      <div className="form-group local-forms">
+                        <label>
+                          Choose the grade type
+                          <span className="login-danger">*</span>
+                        </label>
+                        <select
+                          required
+                          className="form-control"
+                          id="gradeType"
+                          name="gradeType"
+                          value={newGrade.gradeType}
+                          onChange={handleAddGradeInputChange}
+                        >
+                          <option value="">Choose the grade type</option>
+                          <option value="WORK">WORK</option>
+                          <option value="HOMEWORK">HOMEWORK</option>
+                          <option value="MINI_TEST">MINI_TEST</option>
+                          <option value="TEST">TEST</option>
+                          <option value="MODULE">MODULE</option>
+                        </select>
                       </div>
                     </div>
                     <div className="col-12">
@@ -346,4 +389,4 @@ const AddLesson = () => {
     </>
   );
 };
-export default AddLesson;
+export default AddGrade;

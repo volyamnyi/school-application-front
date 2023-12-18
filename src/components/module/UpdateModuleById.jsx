@@ -5,15 +5,15 @@ import { useParams } from "react-router-dom";
 import { getAllSubjects } from "../../utils/ApiFunctions";
 import { getAllTeachers } from "../../utils/ApiFunctions";
 import { getAllClassGroups } from "../../utils/ApiFunctions";
-
 import { Link } from "react-router-dom";
 
+import SelectPaginator from "../pagination/SelectPaginator";
+
 const UpdateModuleById = () => {
-  
   const { id } = useParams();
-  
+
   const [module, setModule] = useState({
-    id:"",
+    id: "",
     subjectId: "",
     classRoomId: "",
     teacherId: "",
@@ -23,44 +23,42 @@ const UpdateModuleById = () => {
     schedule: [new Map()],
   });
   const today = new Date().toISOString().split("T")[0];
-  const [submitDisabled,setSubmitDisabled] = useState(true)
+  const [submitDisabled, setSubmitDisabled] = useState(true);
 
   const [schedule, setSchedule] = useState(new Map());
   const [dayOfWeek, setDayOfWeek] = useState("");
   const [order, setOrder] = useState("");
 
-  const objectToMap = (obj)=> {
+  const objectToMap = (obj) => {
     const map = new Map();
-  
-    Object.keys(obj).forEach(key => {
+
+    Object.keys(obj).forEach((key) => {
       map.set(key, obj[key]);
     });
-  
+
     return map;
-  }
+  };
 
   useEffect(() => {
     getModuleById(id).then((module) => {
-      
-      const scheduleMap = objectToMap(module.schedule)
-      const defaultDay = Object.getOwnPropertyNames(module.schedule)[0]
-      const defaulOrder = module.schedule[dayOfWeek]
+      const scheduleMap = objectToMap(module.schedule);
+      const defaultDay = Object.getOwnPropertyNames(module.schedule)[0];
+      const defaulOrder = module.schedule[dayOfWeek];
       module.schedule = scheduleMap;
-      setDayOfWeek(defaultDay)
-      setOrder(defaulOrder)
-     
+      setDayOfWeek(defaultDay);
+      setOrder(defaulOrder);
+
       module.startDate = module.startDate.split("T")[0];
       module.endDate = module.endDate.split("T")[0];
-    
-      
-      scheduleMap.size > 0 && setSubmitDisabled(false)
-      
-      setSchedule(scheduleMap)
+
+      scheduleMap.size > 0 && setSubmitDisabled(false);
+
+      setSchedule(scheduleMap);
       setModule(module);
     });
   }, [module.id]);
 
-  const [subject, setSubject] = useState({
+  const [subjects, setSubjects] = useState({
     content: [
       {
         id: "",
@@ -69,13 +67,7 @@ const UpdateModuleById = () => {
     ],
   });
 
-  useEffect(() => {
-    getAllSubjects().then((data) => {
-      setSubject(data);
-    });
-  }, []);
-
-  const [classGroup, setClassGroup] = useState({
+  const [classGroups, setClassGroups] = useState({
     content: [
       {
         id: "",
@@ -84,13 +76,7 @@ const UpdateModuleById = () => {
     ],
   });
 
-  useEffect(() => {
-    getAllClassGroups().then((data) => {
-      setClassGroup(data);
-    });
-  }, []);
-
-  const [teacher, setTeacher] = useState({
+  const [teachers, setTeachers] = useState({
     content: [
       {
         id: "",
@@ -100,11 +86,71 @@ const UpdateModuleById = () => {
     ],
   });
 
+  const totalSubjectSelectListPages = subjects.totalPages;
+  const totalSubjectSelectListElements = subjects.totalElements;
+  const [currentSubjectSelectListPage, setCurrentSubjectSelectListPage] =
+    useState(1);
+  const [
+    selectSubjectListElementsPerPage,
+    setSelectSubjectElementsPerListPage,
+  ] = useState(10);
+
+  const totalClassGroupSelectListPages = classGroups.totalPages;
+  const totalClassGroupSelectListElements = classGroups.totalElements;
+  const [currentClassGroupSelectListPage, setCurrentClassGroupSelectListPage] =
+    useState(1);
+  const [
+    selectClassGroupListElementsPerPage,
+    setSelectClassGroupElementsPerListPage,
+  ] = useState(10);
+
+  const totalTeacherSelectListPages = classGroups.totalPages;
+  const totalTeacherSelectListElements = classGroups.totalElements;
+  const [currentTeacherSelectListPage, setCurrentTeacherSelectListPage] =
+    useState(1);
+  const [
+    selectTeacherListElementsPerPage,
+    setSelectTeacherElementsPerListPage,
+  ] = useState(10);
+
   useEffect(() => {
-    getAllTeachers().then((data) => {
-      setTeacher(data);
+    getAllSubjects(
+      currentSubjectSelectListPage,
+      selectSubjectListElementsPerPage
+    ).then((data) => {
+      setSubjects(data);
     });
-  }, []);
+  }, [currentSubjectSelectListPage, selectSubjectListElementsPerPage]);
+
+  useEffect(() => {
+    getAllClassGroups(
+      currentClassGroupSelectListPage,
+      selectClassGroupListElementsPerPage
+    ).then((data) => {
+      setClassGroups(data);
+    });
+  }, [currentClassGroupSelectListPage, selectClassGroupListElementsPerPage]);
+
+  useEffect(() => {
+    getAllTeachers(
+      currentTeacherSelectListPage,
+      selectTeacherListElementsPerPage
+    ).then((data) => {
+      setTeachers(data);
+    });
+  }, [currentTeacherSelectListPage, selectTeacherListElementsPerPage]);
+
+  const handleSubjectSelectListPageChange = (pageNumber) => {
+    setCurrentSubjectSelectListPage(pageNumber);
+  };
+
+  const handleClassGroupSelectListPageChange = (pageNumber) => {
+    setCurrentClassGroupSelectListPage(pageNumber);
+  };
+
+  const handleTeacherSelectListPageChange = (pageNumber) => {
+    setCurrentTeacherSelectListPage(pageNumber);
+  };
 
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -119,9 +165,25 @@ const UpdateModuleById = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const response = await updateModuleById(id,module);
+    const response = await updateModuleById(id, module);
+    getModuleById(id).then((module) => {
+      const scheduleMap = objectToMap(module.schedule);
+      const defaultDay = Object.getOwnPropertyNames(module.schedule)[0];
+      const defaulOrder = module.schedule[dayOfWeek];
+      module.schedule = scheduleMap;
+      setDayOfWeek(defaultDay);
+      setOrder(defaulOrder);
 
-    setModule({
+      module.startDate = module.startDate.split("T")[0];
+      module.endDate = module.endDate.split("T")[0];
+
+      scheduleMap.size > 0 && setSubmitDisabled(false);
+
+      setSchedule(scheduleMap);
+      setModule(module);
+    });
+
+    /*setModule({
       subjectId: "",
       classRoomId: "",
       teacherId: "",
@@ -132,7 +194,7 @@ const UpdateModuleById = () => {
 
     setDayOfWeek("");
     setOrder("");
-    clearSchedule();
+    clearSchedule();*/
 
     if (response.status === 200) {
       setSuccessMessage("The Module updated successfully!");
@@ -164,13 +226,13 @@ const UpdateModuleById = () => {
 
     setModule({ ...module, schedule: newSchedule });
 
-    setSubmitDisabled(false)
+    setSubmitDisabled(false);
   };
 
-  const clearSchedule =() => {
+  const clearSchedule = () => {
     setSchedule("");
-    setSubmitDisabled(true)
-  }
+    setSubmitDisabled(true);
+  };
   return (
     <>
       <div className="content container-fluid">
@@ -215,6 +277,12 @@ const UpdateModuleById = () => {
                       </h5>
                     </div>
                     <div className="col-12 col-sm-4">
+                      <SelectPaginator
+                        currentPage={currentSubjectSelectListPage}
+                        totalPages={totalSubjectSelectListPages}
+                        onPageChange={handleSubjectSelectListPageChange}
+                      />
+                      <br />
                       <div className="form-group local-forms">
                         <label>
                           Choose the subject
@@ -227,9 +295,13 @@ const UpdateModuleById = () => {
                           name="subjectId"
                           value={module.subjectId}
                           onChange={handleAddModuleInputChange}
+                          style={{
+                            height: "13rem",
+                          }}
+                          size={2}
                         >
-                          <option value="">Choose the subject</option>
-                          {subject.content.map((sbj) => (
+                          <option></option>
+                          {subjects.content.map((sbj) => (
                             <option value={sbj.id} key={sbj.id}>
                               {sbj.name}
                             </option>
@@ -238,6 +310,12 @@ const UpdateModuleById = () => {
                       </div>
                     </div>
                     <div className="col-12 col-sm-4">
+                      <SelectPaginator
+                        currentPage={currentClassGroupSelectListPage}
+                        totalPages={totalClassGroupSelectListPages}
+                        onPageChange={handleClassGroupSelectListPageChange}
+                      />
+                      <br />
                       <div className="form-group local-forms">
                         <label>
                           Choose the class room
@@ -250,9 +328,13 @@ const UpdateModuleById = () => {
                           name="classRoomId"
                           value={module.classRoomId}
                           onChange={handleAddModuleInputChange}
+                          style={{
+                            height: "13rem",
+                          }}
+                          size={2}
                         >
-                          <option value="">Choose the class room</option>
-                          {classGroup.content.map((cls) => (
+                          <option></option>
+                          {classGroups.content.map((cls) => (
                             <option value={cls.id} key={cls.id}>
                               {cls.name}
                             </option>
@@ -261,6 +343,12 @@ const UpdateModuleById = () => {
                       </div>
                     </div>
                     <div className="col-12 col-sm-4">
+                      <SelectPaginator
+                        currentPage={currentTeacherSelectListPage}
+                        totalPages={totalTeacherSelectListPages}
+                        onPageChange={handleTeacherSelectListPageChange}
+                      />
+                      <br />
                       <div className="form-group local-forms">
                         <label>
                           Choose the teacher
@@ -273,9 +361,13 @@ const UpdateModuleById = () => {
                           name="teacherId"
                           value={module.teacherId}
                           onChange={handleAddModuleInputChange}
+                          style={{
+                            height: "13rem",
+                          }}
+                          size={2}
                         >
-                          <option value="">Choose the teacher</option>
-                          {teacher.content.map((tch) => (
+                          <option></option>
+                          {teachers.content.map((tch) => (
                             <option value={tch.id} key={tch.id}>
                               {tch.firstName} {tch.lastName}
                             </option>
@@ -312,7 +404,7 @@ const UpdateModuleById = () => {
                           name="startDate"
                           value={module.startDate}
                           onChange={handleAddModuleInputChange}
-                          min={today}
+                          
                         />
                       </div>
                     </div>
@@ -329,7 +421,7 @@ const UpdateModuleById = () => {
                           name="endDate"
                           value={module.endDate}
                           onChange={handleAddModuleInputChange}
-                          min={today}
+                         
                         />
                       </div>
                     </div>
@@ -385,7 +477,8 @@ const UpdateModuleById = () => {
                           onClick={updateSchedule}
                         >
                           Set schedule
-                        </button><span>&nbsp;</span>
+                        </button>
+                        <span>&nbsp;</span>
                         <button
                           type="button"
                           className="btn btn-danger"
@@ -395,7 +488,7 @@ const UpdateModuleById = () => {
                         </button>
                       </div>
                     </div>
-                    
+
                     <div className="row">
                       <div className="col-sm-12">
                         <table
@@ -445,7 +538,13 @@ const UpdateModuleById = () => {
 
                     <div className="col-12">
                       <div className="student-submit">
-                        <button id="submit" disabled={submitDisabled} type="submit" className="btn btn-primary" style={{marginLeft:"30%"}}>
+                        <button
+                          id="submit"
+                          disabled={submitDisabled}
+                          type="submit"
+                          className="btn btn-primary"
+                          style={{ marginLeft: "30%" }}
+                        >
                           Submit
                         </button>
                       </div>

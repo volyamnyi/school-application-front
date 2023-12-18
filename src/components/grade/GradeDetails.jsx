@@ -1,40 +1,48 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getAttendanceById } from "../../utils/ApiFunctions";
+import { getGradeById } from "../../utils/ApiFunctions";
 import { getLessonById } from "../../utils/ApiFunctions";
 import { getStudentById } from "../../utils/ApiFunctions";
-
 import { Link } from "react-router-dom";
 
-const AttendanceDetails = () => {
+const GradeDetails = () => {
   const { id } = useParams();
-
-  const [attendance, setAttendance] = useState({
+  const [grade, setGrade] = useState({
     id: "",
-    lessonId: "",
     studentId: "",
-    attendanceType: "",
+    lessonId: "",
+    gradeValue: "",
+    gradeType: "",
   });
-  const [lesson, setLesson] = useState({});
-  const [student, setStudent] = useState({});
 
+  const [lesson, setLesson] = useState({
+    id: "",
+    name: "",
+  });
+
+  const [student, setStudent] = useState({
+    id: "",
+    firstName: "",
+    lastName: "",
+  });
+  
   useEffect(() => {
-    getAttendanceById(id).then((data) => {
-      setAttendance(data);
+    getGradeById(id).then((grade) => {
+      setGrade(grade);
     });
   }, []);
-  
+
   useEffect(() => {
-    getLessonById(attendance.lessonId).then((data) => {
-      setLesson(data);
+    getLessonById(grade.lessonId).then((lesson) => {
+      setLesson(lesson);
     });
-  }, [attendance.id]);
-  
+  }, [grade.lessonId]);
+
   useEffect(() => {
-    getStudentById(attendance.studentId).then((data) => {
-      setStudent(data);
+    getStudentById(grade.studentId).then((student) => {
+      setStudent(student);
     });
-  }, [attendance.id]);
+  }, [grade.studentId]);
 
   return (
     <>
@@ -43,12 +51,12 @@ const AttendanceDetails = () => {
           <div className="page-header">
             <div className="row align-items-center">
               <div className="col">
-                <h3 className="page-title">Attendance Details</h3>
+                <h3 className="page-title">Grade Details</h3>
                 <ul className="breadcrumb">
                   <li className="breadcrumb-item">
-                    <Link to="/attendance">Attendance</Link>
+                    <Link to="/grades">Grades</Link>
                   </li>
-                  <li className="breadcrumb-item active">Attendance Details</li>
+                  <li className="breadcrumb-item active">Grade Details</li>
                 </ul>
               </div>
             </div>
@@ -72,13 +80,13 @@ const AttendanceDetails = () => {
                           >
                             <thead className="student-thread">
                               <tr role="row">
-                                <th style={{ width: "186.203px" }}>Lesson</th>
                                 <th style={{ width: "186.203px" }}>Student</th>
+                                <th style={{ width: "186.203px" }}>Lesson</th>
                                 <th style={{ width: "186.203px" }}>
-                                  Attendance type
+                                  Grade Value
                                 </th>
                                 <th style={{ width: "186.203px" }}>
-                                 Date
+                                  Grade Type
                                 </th>
                               </tr>
                             </thead>
@@ -86,22 +94,24 @@ const AttendanceDetails = () => {
                               <tr role="row" className="odd">
                                 <td>
                                   <h2>
+                                    <a>
+                                      {student.firstName} {student.lastName}
+                                    </a>
+                                  </h2>
+                                </td>
+                                <td>
+                                  <h2>
                                     <a>{lesson.name}</a>
                                   </h2>
                                 </td>
                                 <td>
                                   <h2>
-                                    <a>{student.firstName} {student.lastName}</a>
+                                    <a>{grade.gradeValue}</a>
                                   </h2>
                                 </td>
                                 <td>
                                   <h2>
-                                    <a>{attendance.attendanceType}</a>
-                                  </h2>
-                                </td>
-                                <td>
-                                  <h2>
-                                    <a>{lesson.date}</a>
+                                    <a>{grade.gradeType}</a>
                                   </h2>
                                 </td>
                               </tr>
@@ -121,4 +131,4 @@ const AttendanceDetails = () => {
   );
 };
 
-export default AttendanceDetails;
+export default GradeDetails;

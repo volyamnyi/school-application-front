@@ -4,8 +4,9 @@ import { addModule } from "../../utils/ApiFunctions";
 import { getAllSubjects } from "../../utils/ApiFunctions";
 import { getAllTeachers } from "../../utils/ApiFunctions";
 import { getAllClassGroups } from "../../utils/ApiFunctions";
-
 import { Link } from "react-router-dom";
+
+import SelectPaginator from "../pagination/SelectPaginator";
 
 const AddModule = () => {
   const [newModule, setNewModule] = useState({
@@ -18,13 +19,13 @@ const AddModule = () => {
     schedule: new Map(),
   });
   const today = new Date().toISOString().split("T")[0];
-  const [submitDisabled,setSubmitDisabled] = useState(true)
+  const [submitDisabled, setSubmitDisabled] = useState(true);
 
   const [schedule, setSchedule] = useState(new Map());
   const [dayOfWeek, setDayOfWeek] = useState("");
   const [order, setOrder] = useState("");
 
-  const [subject, setSubject] = useState({
+  const [subjects, setSubjects] = useState({
     content: [
       {
         id: "",
@@ -33,13 +34,7 @@ const AddModule = () => {
     ],
   });
 
-  useEffect(() => {
-    getAllSubjects().then((data) => {
-      setSubject(data);
-    });
-  }, []);
-
-  const [classGroup, setClassGroup] = useState({
+  const [classGroups, setClassGroups] = useState({
     content: [
       {
         id: "",
@@ -48,13 +43,7 @@ const AddModule = () => {
     ],
   });
 
-  useEffect(() => {
-    getAllClassGroups().then((data) => {
-      setClassGroup(data);
-    });
-  }, []);
-
-  const [teacher, setTeacher] = useState({
+  const [teachers, setTeachers] = useState({
     content: [
       {
         id: "",
@@ -64,11 +53,71 @@ const AddModule = () => {
     ],
   });
 
+  const totalSubjectSelectListPages = subjects.totalPages;
+  const totalSubjectSelectListElements = subjects.totalElements;
+  const [currentSubjectSelectListPage, setCurrentSubjectSelectListPage] =
+    useState(1);
+  const [
+    selectSubjectListElementsPerPage,
+    setSelectSubjectElementsPerListPage,
+  ] = useState(10);
+
+  const totalClassGroupSelectListPages = classGroups.totalPages;
+  const totalClassGroupSelectListElements = classGroups.totalElements;
+  const [currentClassGroupSelectListPage, setCurrentClassGroupSelectListPage] =
+    useState(1);
+  const [
+    selectClassGroupListElementsPerPage,
+    setSelectClassGroupElementsPerListPage,
+  ] = useState(10);
+
+  const totalTeacherSelectListPages = classGroups.totalPages;
+  const totalTeacherSelectListElements = classGroups.totalElements;
+  const [currentTeacherSelectListPage, setCurrentTeacherSelectListPage] =
+    useState(1);
+  const [
+    selectTeacherListElementsPerPage,
+    setSelectTeacherElementsPerListPage,
+  ] = useState(10);
+
   useEffect(() => {
-    getAllTeachers().then((data) => {
-      setTeacher(data);
+    getAllSubjects(
+      currentSubjectSelectListPage,
+      selectSubjectListElementsPerPage
+    ).then((data) => {
+      setSubjects(data);
     });
-  }, []);
+  }, [currentSubjectSelectListPage, selectSubjectListElementsPerPage]);
+
+  useEffect(() => {
+    getAllClassGroups(
+      currentClassGroupSelectListPage,
+      selectClassGroupListElementsPerPage
+    ).then((data) => {
+      setClassGroups(data);
+    });
+  }, [currentClassGroupSelectListPage, selectClassGroupListElementsPerPage]);
+
+  useEffect(() => {
+    getAllTeachers(
+      currentTeacherSelectListPage,
+      selectTeacherListElementsPerPage
+    ).then((data) => {
+      setTeachers(data);
+    });
+  }, [currentTeacherSelectListPage, selectTeacherListElementsPerPage]);
+
+  const handleSubjectSelectListPageChange = (pageNumber) => {
+    setCurrentSubjectSelectListPage(pageNumber);
+  };
+
+  const handleClassGroupSelectListPageChange = (pageNumber) => {
+    setCurrentClassGroupSelectListPage(pageNumber);
+  };
+
+  const handleTeacherSelectListPageChange = (pageNumber) => {
+    setCurrentTeacherSelectListPage(pageNumber);
+  };
 
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -123,20 +172,20 @@ const AddModule = () => {
 
     const orderArray = order.split(",").map(Number);
     newSchedule.set(dayOfWeek, new Set(orderArray));
-    
-    console.log(newSchedule)
+
+    console.log(newSchedule);
 
     setSchedule(newSchedule);
 
     setNewModule({ ...newModule, schedule: newSchedule });
 
-    setSubmitDisabled(false)
+    setSubmitDisabled(false);
   };
 
-  const clearSchedule =() => {
+  const clearSchedule = () => {
     setSchedule("");
-    setSubmitDisabled(true)
-  }
+    setSubmitDisabled(true);
+  };
   return (
     <>
       <div className="content container-fluid">
@@ -181,6 +230,12 @@ const AddModule = () => {
                       </h5>
                     </div>
                     <div className="col-12 col-sm-4">
+                      <SelectPaginator
+                        currentPage={currentSubjectSelectListPage}
+                        totalPages={totalSubjectSelectListPages}
+                        onPageChange={handleSubjectSelectListPageChange}
+                      />
+                      <br />
                       <div className="form-group local-forms">
                         <label>
                           Choose the subject
@@ -193,17 +248,27 @@ const AddModule = () => {
                           name="subjectId"
                           value={newModule.subjectId}
                           onChange={handleAddModuleInputChange}
+                          style={{
+                            height: "13rem",
+                          }}
+                          size={2}
                         >
-                          <option value="">Choose the subject</option>
-                          {subject.content.map((sbj) => (
-                            <option value={sbj.id} key={sbj.id}>
-                              {sbj.name}
+                          <option></option>
+                          {subjects.content.map((sb) => (
+                            <option value={sb.id} key={sb.id}>
+                              {sb.name}
                             </option>
                           ))}
                         </select>
                       </div>
                     </div>
                     <div className="col-12 col-sm-4">
+                      <SelectPaginator
+                        currentPage={currentClassGroupSelectListPage}
+                        totalPages={totalClassGroupSelectListPages}
+                        onPageChange={handleClassGroupSelectListPageChange}
+                      />
+                      <br />
                       <div className="form-group local-forms">
                         <label>
                           Choose the class room
@@ -216,9 +281,13 @@ const AddModule = () => {
                           name="classRoomId"
                           value={newModule.classRoomId}
                           onChange={handleAddModuleInputChange}
+                          style={{
+                            height: "13rem",
+                          }}
+                          size={2}
                         >
-                          <option value="">Choose the class room</option>
-                          {classGroup.content.map((cls) => (
+                          <option></option>
+                          {classGroups.content.map((cls) => (
                             <option value={cls.id} key={cls.id}>
                               {cls.name}
                             </option>
@@ -227,6 +296,12 @@ const AddModule = () => {
                       </div>
                     </div>
                     <div className="col-12 col-sm-4">
+                      <SelectPaginator
+                        currentPage={currentTeacherSelectListPage}
+                        totalPages={totalTeacherSelectListPages}
+                        onPageChange={handleTeacherSelectListPageChange}
+                      />
+                      <br />
                       <div className="form-group local-forms">
                         <label>
                           Choose the teacher
@@ -239,9 +314,13 @@ const AddModule = () => {
                           name="teacherId"
                           value={newModule.teacherId}
                           onChange={handleAddModuleInputChange}
+                          style={{
+                            height: "13rem",
+                          }}
+                          size={2}
                         >
-                          <option value="">Choose the teacher</option>
-                          {teacher.content.map((tch) => (
+                          <option></option>
+                          {teachers.content.map((tch) => (
                             <option value={tch.id} key={tch.id}>
                               {tch.firstName} {tch.lastName}
                             </option>
@@ -351,7 +430,8 @@ const AddModule = () => {
                           onClick={updateSchedule}
                         >
                           Set schedule
-                        </button><span>&nbsp;</span>
+                        </button>
+                        <span>&nbsp;</span>
                         <button
                           type="button"
                           className="btn btn-danger"
@@ -361,7 +441,7 @@ const AddModule = () => {
                         </button>
                       </div>
                     </div>
-                    
+
                     <div className="row">
                       <div className="col-sm-12">
                         <table
@@ -411,7 +491,13 @@ const AddModule = () => {
 
                     <div className="col-12">
                       <div className="student-submit">
-                        <button id="submit" disabled={submitDisabled} type="submit" className="btn btn-primary" style={{marginLeft:"30%"}}>
+                        <button
+                          id="submit"
+                          disabled={submitDisabled}
+                          type="submit"
+                          className="btn btn-primary"
+                          style={{ marginLeft: "30%" }}
+                        >
                           Submit
                         </button>
                       </div>

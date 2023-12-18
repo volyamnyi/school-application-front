@@ -1,25 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getAttendanceById } from "../../utils/ApiFunctions";
-import { updateAttendanceById } from "../../utils/ApiFunctions";
-import { getAllSubjects } from "../../utils/ApiFunctions";
+import { getGradeById } from "../../utils/ApiFunctions";
+import { updateGradeById } from "../../utils/ApiFunctions";
 import { getAllStudents } from "../../utils/ApiFunctions";
+import { getAllSubjects } from "../../utils/ApiFunctions";
 import { getAllLessonsBySubjectId } from "../../utils/ApiFunctions";
+
 import { Link } from "react-router-dom";
 
-import SelectPaginator from "../pagination/SelectPaginator";
+const UpdateGradeById = () => {
+  const { id ,selectedSubjectId} = useParams();
+  console.log("selected SUbject id: "+selectedSubjectId)
 
-const UpdateAttendanceById = () => {
-  const { id } = useParams();
-
-  const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const [attendance, setAttendance] = useState({
+  const [grade, setGrade] = useState({
     id: "",
-    lessonId: "",
     studentId: "",
-    attendanceType: "",
+    lessonId: "",
+    gradeValue: "",
+    gradeType: "",
   });
   const [lessons, setLessons] = useState({
     content: [
@@ -34,7 +32,7 @@ const UpdateAttendanceById = () => {
     ],
   });
   const [subject, setSubject] = useState({
-    id: "",
+    id: selectedSubjectId,
     name: "",
   });
 
@@ -59,91 +57,40 @@ const UpdateAttendanceById = () => {
     ],
   });
 
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
   useEffect(() => {
-    getAttendanceById(id).then((attendance) => {
-      setAttendance(attendance);
+    getGradeById(id).then((data)=>{
+        setGrade(data)
+    });
+  },[]);
+
+  useEffect(() => {
+    getAllSubjects().then((data) => {
+      setSubjects(data);
+    });
+  }, []);
+  
+  useEffect(() => {
+    getAllStudents().then((data) => {
+      setStudents(data);
     });
   }, []);
 
-  const totalStudentSelectListPages = students.totalPages;
-  const totalStudentSelectListElements = students.totalElements;
-  const [currentStudentSelectListPage, setCurrentStudentSelectListPage] =
-    useState(1);
-  const [
-    selectStudentListElementsPerPage,
-    setStudentSelectElementsPerListPage,
-  ] = useState(10);
-
-  const totalSubjectSelectListPages = subjects.totalPages;
-  const totalSubjectSelectListElements = subjects.totalElements;
-  const [currentSubjectSelectListPage, setCurrentSubjectSelectListPage] =
-    useState(1);
-  const [
-    selectSubjectListElementsPerPage,
-    setSelectSubjectElementsPerListPage,
-  ] = useState(10);
-
-  const totalLessonSelectListPages = lessons.totalPages;
-  const totalLessonSelectListElements = lessons.totalElements;
-  const [currentLessonSelectListPage, setCurrentLessonSelectListPage] =
-    useState(1);
-  const [selectLessonListElementsPerPage, setSelectLessonElementsPerListPage] =
-    useState(10);
-
-  useEffect(() => {
-    getAllStudents(
-      currentStudentSelectListPage,
-      selectStudentListElementsPerPage
-    ).then((data) => {
-      setStudents(data);
-    });
-  }, [currentStudentSelectListPage, selectStudentListElementsPerPage]);
-
-  useEffect(() => {
-    getAllSubjects(
-      currentSubjectSelectListPage,
-      selectSubjectListElementsPerPage
-    ).then((data) => {
-      setSubjects(data);
-    });
-  }, [currentSubjectSelectListPage, selectSubjectListElementsPerPage]);
-
-  useEffect(() => {
-    if (subject.id !== "") {
-      getAllLessonsBySubjectId(
-        subject.id,
-        currentLessonSelectListPage,
-        selectLessonListElementsPerPage
-      ).then((data) => {
+  useEffect(()=>{
+    getAllLessonsBySubjectId(selectedSubjectId).then((data) => {
         setLessons(data);
-      });
-    }
-  }, [
-    subject.id,
-    currentLessonSelectListPage,
-    selectLessonListElementsPerPage,
-  ]);
-
-  const handleStudentSelectListPageChange = (pageNumber) => {
-    setCurrentStudentSelectListPage(pageNumber);
-  };
-
-  const handleSubjectSelectListPageChange = (pageNumber) => {
-    setCurrentSubjectSelectListPage(pageNumber);
-  };
-
-  const handleLessonSelectListPageChange = (pageNumber) => {
-    setCurrentLessonSelectListPage(pageNumber);
-  };
+      })
+  },[])
 
   const handleSelectSubjectChange = (event) => {
     const name = event.target.name;
     const value = event.target.value;
 
     setSubject({ ...subject, [name]: value });
-    setCurrentLessonSelectListPage(1);
 
-    /*value !== ""
+    value !== ""
       ? getAllLessonsBySubjectId(value).then((data) => {
           setLessons(data);
         })
@@ -158,37 +105,33 @@ const UpdateAttendanceById = () => {
               moduleId: "",
             },
           ],
-        });*/
+        });
   };
 
   const handleSelectLessonChange = (event) => {
     const name = event.target.name;
     const value = event.target.value;
-    setAttendance({ ...attendance, [name]: value });
+    setGrade({ ...grade, [name]: value });
   };
 
-  const handleAddLessonInputChange = (event) => {
+  const handleAddGradeInputChange = (event) => {
     const name = event.target.name;
     const value = event.target.value;
-    setAttendance({ ...attendance, [name]: value });
+    setGrade({ ...grade, [name]: value });
   };
   const handleSelectStudentChange = (event) => {
     const name = event.target.name;
     const value = event.target.value;
-    setAttendance({ ...attendance, [name]: value });
+    setGrade({ ...grade, [name]: value });
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const response = await updateAttendanceById(id, attendance);
-    setAttendance({
-      lessonId: "",
-      studentId: "",
-      attendanceType: "",
-    });
+    const response = await updateGradeById(id, grade);
+   
 
     if (response.status === 200) {
-      setSuccessMessage("The Attendance updated successfully!");
+      setSuccessMessage("The Grade updated successfully!");
     } else {
       setErrorMessage(response);
     }
@@ -219,12 +162,12 @@ const UpdateAttendanceById = () => {
         <div className="page-header">
           <div className="row align-items-center">
             <div className="col">
-              <h3 className="page-title">Update Attendance</h3>
+              <h3 className="page-title">Update Grade</h3>
               <ul className="breadcrumb">
                 <li className="breadcrumb-item">
-                  <Link to="/attendance">Attendance</Link>
+                  <Link to="/grade">Grade</Link>
                 </li>
-                <li className="breadcrumb-item active">Update Attendance</li>
+                <li className="breadcrumb-item active">Update Grade</li>
               </ul>
             </div>
           </div>
@@ -237,16 +180,10 @@ const UpdateAttendanceById = () => {
                   <div className="row">
                     <div className="col-12">
                       <h5 className="form-title">
-                        <span>Attendance Information</span>
+                        <span>Grade Information</span>
                       </h5>
                     </div>
-                    <div className="col-12 col-sm-4">
-                      <SelectPaginator
-                        currentPage={currentStudentSelectListPage}
-                        totalPages={totalStudentSelectListPages}
-                        onPageChange={handleStudentSelectListPageChange}
-                      />
-                      <br />
+                    <div className="col-12 col-sm-3">
                       <div className="form-group local-forms">
                         <label>
                           Choose the student
@@ -257,14 +194,10 @@ const UpdateAttendanceById = () => {
                           className="form-control"
                           id="studentId"
                           name="studentId"
-                          value={attendance.studentId}
+                          value={grade.studentId}
                           onChange={handleSelectStudentChange}
-                          style={{
-                            height: "13rem",
-                          }}
-                          size={2}
                         >
-                          <option></option>
+                          <option value="">Choose the student</option>
                           {students.content.map((st) => (
                             <option value={st.id} key={st.id}>
                               {st.firstName} {st.lastName}
@@ -273,13 +206,7 @@ const UpdateAttendanceById = () => {
                         </select>
                       </div>
                     </div>
-                    <div className="col-12 col-sm-4">
-                      <SelectPaginator
-                        currentPage={currentSubjectSelectListPage}
-                        totalPages={totalSubjectSelectListPages}
-                        onPageChange={handleSubjectSelectListPageChange}
-                      />
-                      <br />
+                    <div className="col-12 col-sm-3">
                       <div className="form-group local-forms">
                         <label>
                           Choose the subject
@@ -292,12 +219,8 @@ const UpdateAttendanceById = () => {
                           name="id"
                           value={subject.id}
                           onChange={handleSelectSubjectChange}
-                          style={{
-                            height: "13rem",
-                          }}
-                          size={2}
                         >
-                          <option></option>
+                        <option value="">Choose the subject</option>
                           {subjects.content.map((sb) => (
                             <option value={sb.id} key={sb.id}>
                               {sb.name}
@@ -306,13 +229,7 @@ const UpdateAttendanceById = () => {
                         </select>
                       </div>
                     </div>
-                    <div className="col-12 col-sm-4">
-                      <SelectPaginator
-                        currentPage={currentLessonSelectListPage}
-                        totalPages={totalLessonSelectListPages}
-                        onPageChange={handleLessonSelectListPageChange}
-                      />
-                      <br />
+                    <div className="col-12 col-sm-3">
                       <div className="form-group local-forms">
                         <label>
                           Choose the lessons
@@ -323,14 +240,10 @@ const UpdateAttendanceById = () => {
                           className="form-control"
                           id="lessonId"
                           name="lessonId"
-                          value={attendance.lessonId}
+                          value={grade.lessonId}
                           onChange={handleSelectLessonChange}
-                          style={{
-                            height: "13rem",
-                          }}
-                          size={2}
                         >
-                          <option></option>
+                          <option value="">Choose the lesson</option>
                           {lessons.content.map((less) => (
                             <option value={less.id} key={less.id}>
                               {less.name}
@@ -342,23 +255,41 @@ const UpdateAttendanceById = () => {
                     <div className="col-12 col-sm-3">
                       <div className="form-group local-forms">
                         <label>
-                          Choose the student
+                          Grade Value <span className="login-danger">*</span>
+                        </label>
+                        <input
+                          required
+                          type="number"
+                          min="1"
+                          max="12"
+                          className="form-control"
+                          id="gradeValue"
+                          name="gradeValue"
+                          value={grade.gradeValue}
+                          onChange={handleAddGradeInputChange}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-12 col-sm-3">
+                      <div className="form-group local-forms">
+                        <label>
+                          Choose the grade type
                           <span className="login-danger">*</span>
                         </label>
                         <select
                           required
                           className="form-control"
-                          id="attendanceType"
-                          name="attendanceType"
-                          value={attendance.attendanceType}
-                          onChange={handleAddLessonInputChange}
+                          id="gradeType"
+                          name="gradeType"
+                          value={grade.gradeType}
+                          onChange={handleAddGradeInputChange}
                         >
-                          <option value="">Choose the attendance type</option>
-                          <option value="ABSENT">ABSENT</option>
-                          <option value="LATE">LATE</option>
-                          <option value="EXCUSED">EXCUSED</option>
-                          <option value="PRESENT">PRESENT</option>
-                          <option value="UNDEFINED">UNDEFINED</option>
+                          <option value="">Choose the grade type</option>
+                          <option value="WORK">WORK</option>
+                          <option value="HOMEWORK">HOMEWORK</option>
+                          <option value="MINI_TEST">MINI_TEST</option>
+                          <option value="TEST">TEST</option>
+                          <option value="MODULE">MODULE</option>
                         </select>
                       </div>
                     </div>
@@ -379,4 +310,4 @@ const UpdateAttendanceById = () => {
     </>
   );
 };
-export default UpdateAttendanceById;
+export default UpdateGradeById;

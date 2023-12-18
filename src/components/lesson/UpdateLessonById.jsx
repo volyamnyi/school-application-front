@@ -3,12 +3,11 @@ import { useParams } from "react-router-dom";
 import { getLessonById, updateLessonById } from "../../utils/ApiFunctions";
 import { getAllSubjects } from "../../utils/ApiFunctions";
 import { getAllModulesBySubjectId } from "../../utils/ApiFunctions";
-
 import { Link } from "react-router-dom";
 
+import SelectPaginator from "../pagination/SelectPaginator";
 const UpdateLessonById = () => {
-  
-  const { id } = useParams();
+  const { id, selectedSubjectId } = useParams();
 
   const [lesson, setLesson] = useState({
     id: "",
@@ -29,7 +28,7 @@ const UpdateLessonById = () => {
   }, []);
 
   const [subject, setSubject] = useState({
-    id: "",
+    id: selectedSubjectId,
     name: "",
   });
 
@@ -56,41 +55,65 @@ const UpdateLessonById = () => {
     ],
   });
 
+  const totalSubjectSelectListPages = subjects.totalPages;
+  const totalSubjectSelectListElements = subjects.totalElements;
+  const [currentSubjectSelectListPage, setCurrentSubjectSelectListPage] =
+    useState(1);
+  const [
+    selectSubjectListElementsPerPage,
+    setSelectSubjectElementsPerListPage,
+  ] = useState(10);
+
+  const totalModuleSelectListPages = modules.totalPages;
+  const totalModuleSelectListElements = modules.totalElements;
+  const [currentModuleSelectListPage, setCurrentModuleSelectListPage] =
+    useState(1);
+  const [selectModuleListElementsPerPage, setSelectModuleElementsPerListPage] =
+    useState(10);
+
   useEffect(() => {
-    getAllSubjects().then((data) => {
+    getAllSubjects(
+      currentSubjectSelectListPage,
+      selectSubjectListElementsPerPage
+    ).then((data) => {
       setSubjects(data);
     });
-  }, []);
+  }, [currentSubjectSelectListPage, selectSubjectListElementsPerPage]);
+
+  useEffect(() => {
+    subject.id !== "" &&
+      getAllModulesBySubjectId(
+        subject.id,
+        currentModuleSelectListPage,
+        selectModuleListElementsPerPage
+      ).then((data) => {
+        setModules(data);
+      });
+  }, [
+    subject.id,
+    currentModuleSelectListPage,
+    selectModuleListElementsPerPage,
+  ]);
+
+  const handleSubjectSelectListPageChange = (pageNumber) => {
+    setCurrentSubjectSelectListPage(pageNumber);
+  };
+
+  const handleModuleSelectListPageChange = (pageNumber) => {
+    setCurrentModuleSelectListPage(pageNumber);
+  };
 
   const handleSelectSubjectChange = (event) => {
     const name = event.target.name;
     const value = event.target.value;
 
     setSubject({ ...subject, [name]: value });
-
-    value !== ""
-      ? getAllModulesBySubjectId(value).then((data) => {
-          setModules(data);
-        })
-      : setModules({
-          content: [
-            {
-              id: "",
-              subjectId: "",
-              classRoomId: "",
-              teacherId: "",
-              name: "",
-              startDate: "",
-              endDate: "",
-            },
-          ],
-        });
+    setCurrentModuleSelectListPage(1);
   };
 
   const handleSelectModuleChange = (event) => {
     const name = event.target.name;
     const value = event.target.value;
-    console.log("name: " + name + " " + "value " + value);
     setLesson({ ...lesson, [name]: value });
   };
 
@@ -103,14 +126,6 @@ const UpdateLessonById = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     const response = await updateLessonById(lesson);
-    setLesson({
-      id: id,
-      name: lesson.name,
-      date: lesson.date,
-      period: lesson.period,
-      homework: lesson.homework,
-      moduleId: lesson.moduleId,
-    });
 
     if (response.status === 200) {
       setSuccessMessage("The Lesson updated successfully!");
@@ -122,6 +137,19 @@ const UpdateLessonById = () => {
       setErrorMessage("");
     }, 3000);
   };
+  /** try to get modules in the loop */
+  /*useEffect(() => {
+    if (
+      lesson.moduleId &&
+      !modules.content.some((mod) => mod.id === lesson.moduleId)
+    ) {
+      
+      setCurrentModuleSelectListPage((prevPage) => prevPage + 1);
+    } else {
+
+    }
+  }, [lesson.id]);*/
+  
   return (
     <>
       <div className="content container-fluid">
@@ -194,7 +222,7 @@ const UpdateLessonById = () => {
                           name="date"
                           value={lesson.date}
                           onChange={handleAddLessonInputChange}
-                          min={today}
+                         
                         />
                       </div>
                     </div>
@@ -217,6 +245,12 @@ const UpdateLessonById = () => {
                       </div>
                     </div>
                     <div className="col-12 col-sm-4">
+                      <SelectPaginator
+                        currentPage={currentSubjectSelectListPage}
+                        totalPages={totalSubjectSelectListPages}
+                        onPageChange={handleSubjectSelectListPageChange}
+                      />
+                      <br />
                       <div className="form-group local-forms">
                         <label>
                           Choose the subject
@@ -229,8 +263,12 @@ const UpdateLessonById = () => {
                           name="id"
                           value={subject.id}
                           onChange={handleSelectSubjectChange}
+                          style={{
+                            height: "13rem",
+                          }}
+                          size={2}
                         >
-                          <option value="">Choose the subject</option>
+                          <option></option>
                           {subjects.content.map((sb) => (
                             <option value={sb.id} key={sb.id}>
                               {sb.name}
@@ -240,6 +278,12 @@ const UpdateLessonById = () => {
                       </div>
                     </div>
                     <div className="col-12 col-sm-4">
+                      <SelectPaginator
+                        currentPage={currentModuleSelectListPage}
+                        totalPages={totalModuleSelectListPages}
+                        onPageChange={handleModuleSelectListPageChange}
+                      />
+                      <br />
                       <div className="form-group local-forms">
                         <label>
                           Choose the module
@@ -252,8 +296,12 @@ const UpdateLessonById = () => {
                           name="moduleId"
                           value={lesson.moduleId}
                           onChange={handleSelectModuleChange}
+                          style={{
+                            height: "13rem",
+                          }}
+                          size={2}
                         >
-                          <option value="">Choose the module</option>
+                          <option></option>
                           {modules.content.map((mod) => (
                             <option value={mod.id} key={mod.id}>
                               {mod.name}
@@ -266,7 +314,8 @@ const UpdateLessonById = () => {
                     <div className="col-12 col-sm-4">
                       <div className="form-group local-forms">
                         <label>Homerwork</label>
-                        <input
+                        <textarea
+                          style={{ width: "100%", height: "285px" }}
                           type="text"
                           className="form-control"
                           id="homework"

@@ -3,6 +3,8 @@ import { addMedicalRecords } from "../../utils/ApiFunctions";
 import { getAllStudents } from "../../utils/ApiFunctions";
 import { Link } from "react-router-dom";
 
+import SelectPaginator from "../pagination/SelectPaginator";
+
 const AddMedicalRecords = () => {
   const [newMedicalRecords, setNewMedicalRecords] = useState({
     healthGroup: "",
@@ -10,7 +12,7 @@ const AddMedicalRecords = () => {
     info: "",
     studentId: "",
   });
-  
+
   const [data, setData] = useState({
     content: [
       {
@@ -22,12 +24,24 @@ const AddMedicalRecords = () => {
       },
     ],
   });
-  
+
+  const totalStudentSelectListPages = data.totalPages;
+  const totalStudentSelectListElements = data.totalElements;
+  const [currentStudentSelectListPage, setCurrentStudentSelectListPage] = useState(1);
+  const [selectStudentListElementsPerPage, setStudentSelectElementsPerListPage] =
+    useState(10);
+
   useEffect(() => {
-    getAllStudents().then((data) => {
-      setData(data);
-    });
-  }, []);
+    getAllStudents(currentStudentSelectListPage, selectStudentListElementsPerPage).then(
+      (data) => {
+        setData(data);
+      }
+    );
+  }, [currentStudentSelectListPage, selectStudentListElementsPerPage]);
+
+  const handleStudentSelectListPageChange = (pageNumber) => {
+    setCurrentStudentSelectListPage(pageNumber);
+  };
 
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -58,9 +72,9 @@ const AddMedicalRecords = () => {
       setErrorMessage("Medical Records adding error!");
     }
     setTimeout(() => {
-			setSuccessMessage("")
-			setErrorMessage("")
-		}, 3000)
+      setSuccessMessage("");
+      setErrorMessage("");
+    }, 3000);
   };
 
   return (
@@ -156,7 +170,41 @@ const AddMedicalRecords = () => {
                     </div>
                   </div>
                   <div className="col-12 col-sm-4">
-                    {/*pagination here*/}
+                    <SelectPaginator
+                      currentPage={currentStudentSelectListPage}
+                      totalPages={totalStudentSelectListPages}
+                      onPageChange={handleStudentSelectListPageChange}
+                    />
+
+                    {/*<div className="dropdown">
+                      <a
+                        className="dropdown-toggle show"
+                        href="#"
+                        role="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="true"
+                      >
+                        Dropdown
+                      </a>
+                      <div className="dropdown-menu show" style={{}}>
+                        {data.content.map((st) => (
+                          <option
+                            className="dropdown-item"
+                            href="#"
+                            value={st.id}
+                            onClick={(event) =>
+                              handleAddMedicalRecordsSelectClick(
+                                event,
+                                "studentId"
+                              )
+                            }
+                          >
+                            {st.firstName} {st.lastName}
+                          </option>
+                        ))}
+                      </div>
+                    </div>*/}
+
                     <div className="form-group local-forms">
                       <label>
                         Choose the student
@@ -169,8 +217,12 @@ const AddMedicalRecords = () => {
                         name="studentId"
                         value={newMedicalRecords.studentId}
                         onChange={handleAddMedicalRecordsInputChange}
-                      >
-                        <option value="">Choose the student</option>
+                        style={{
+                          height: "13rem"
+                             
+                        }}
+                        size={2}
+                      ><option></option>
                         {data.content.map((st) => (
                           <option value={st.id} key={st.id}>
                             {st.firstName} {st.lastName}
